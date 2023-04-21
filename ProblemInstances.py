@@ -3,6 +3,7 @@ from ContinuousGreedy import UniformMatroidSolver, PartitionMatroidSolver, Sampl
     ContinuousGreedy, StochasticGradientEstimator
 from networkx import Graph, DiGraph
 from networkx.algorithms import bipartite
+from oco_tools import ThresholdObjective
 from time import time
 from wdnf import WDNF, Taylor
 import argparse
@@ -12,12 +13,6 @@ import networkx as nx
 import numpy as np
 import sys
 import random
-
-
-def qs(x):
-    """Given rho returns rho / (1 - rho)
-    """
-    return x / (1.0 - x)
 
 
 def mul_series(degree):
@@ -88,6 +83,7 @@ class Problem(object):
         """
         self.problemSize = 0
         self.groundSet = set()
+        self.wdnf_dict = dict()
 
     def utility_function(self, y):
         pass
@@ -137,7 +133,20 @@ class Problem(object):
         logging.info('done.')
         return new_cg.fw(iterations, True, need_restart, backup_file)
     
-    def translate()
+    def translate(self):
+        """ takes self.wdnf_dict and returns the params of a ThresholdObjective
+        """
+        params = dict()
+        n = self.problemSize
+        params['n'] = n
+        C = len(self.wdnf_dict)
+        params['C'] = C
+        params['b'] = np.ones(C)
+        params['w'] = np.ones(n)
+        params['S'] = set(wdnf_dict.keys())
+        params['c'] = wdnf_dict.values()
+        #extensive tests will be added
+        return ThresholdObjective(params)
 
 
 class InfluenceMaximization(Problem):
