@@ -136,6 +136,8 @@ class Problem(object):
         new_cg = ContinuousGreedy(self.get_solver(), estimator, self.get_initial_point())
         logging.info('done.')
         return new_cg.fw(iterations, True, need_restart, backup_file)
+    
+    def translate()
 
 
 class InfluenceMaximization(Problem):
@@ -187,7 +189,9 @@ class InfluenceMaximization(Problem):
         self.dependencies = dependencies
         sys.stderr.write("dependencies are " + str(dependencies) + '\n')
         logging.info('... done. An instance of a influence maximization problem has been created.')
-
+        
+    def translate():
+        
     def get_solver(self):
         """
         """

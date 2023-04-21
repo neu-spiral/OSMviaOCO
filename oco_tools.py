@@ -8,19 +8,20 @@ from itertools import product
 
 class ThresholdObjective:
     def __init__(self, params):
-        # Params format:
-        # params = { The naming corresponds to the one used in the paper
-        #     'n': n, # dimension size
-        #     'C': C, # Number of threshold functions
-        #     'b': b, # Vector of thresholds
-        #     'w': w, # List of vectors (variable size) w[i][j] is the weight of the x[j] within threshold function i
-        #     'S': S, # Collection of sets of indices: S[i] is S_i in the paper
-        #     'c': c, # Coefficients of the threshold functions
-        # }
+        """Params format:
+        params = { The naming corresponds to the one used in the paper
+            'n': n, # dimension size - n, |V|
+            'C': C, # Number of threshold functions - # of wdnfs
+            'b': b, # Vector of thresholds - |1|_C
+            'w': w, # List of vectors (variable size) w[i][j] is the weight of the x[j] within threshold function i -|1|
+            'S': S, # Collection of sets of indices: S[i] is S_i in the paper - dict indices
+            'c': c, # Coefficients of the threshold functions - weights
+        }
+        """
         _keys = ['n', 'C', 'b', 'w', 'S', 'c']
         for key in _keys:
             if key not in params:
-                raise Exception(f'Key {key} is required.')  # Sanity check
+                raise Exception(f'Key {key} is required.')  # Sanity check - replace assert
         for k, v in params.items():
             setattr(self, k, v)
 
@@ -78,11 +79,14 @@ class RelaxedPartitionMatroid(ZeroOneDecisionSet):
             len(cardinalities_k))])  # add additional constraints and inherit functionality from [0, 1] decision set
 
 
+        
+        
+        
 class OCOPolicy:
     def __init__(self, decision_set: ZeroOneDecisionSet, eta: float, objective: ThresholdObjective):
         self.eta = eta
         self.objective = objective  # Requires objective
-        self.decision_set = decision_set  # Requires decision set
+        self.decision_set = decision_set  # Requires decision set #y
         self.frac_rewards = []
         self.int_rewards = []
         self.decision = np.zeros(decision_set.n)
@@ -91,7 +95,7 @@ class OCOPolicy:
     def step(self, eta=None):
         if eta is None:
             eta = self.eta  # Set time varying learning rate
-        frac_reward = self.objective.eval(self.decision)
+        frac_reward = self.objective.eval(self.decision) #what is self.decision
         int_reward = self.objective.eval(self.round(self.decision))
         supergradient = self.objective.supergradient(self.decision)  # Compute supergradient
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
