@@ -74,14 +74,7 @@ class ZeroOneDecisionSet:
 
 class RelaxedPartitionMatroid(ZeroOneDecisionSet):
     def __init__(self, n, cardinalities_k, sets_S):
-        super().__init__(n)
-        # constraints =[]
-        # for i in range(len(cardinalities_k)):
-        #     print(sets_S[i])
-        #     print(type(sets_S[i]))
-        #     constraints.append(cp.sum(self.x[sets_S[i]]) <= cardinalities_k[i])
-        # print(constraints)
-        # self.setup_constraints(constraints)
+        super().__init__(n)git 
         self.setup_constraints([cp.sum(self.x[sets_S[i]]) <= cardinalities_k[i] for i in range(
             len(cardinalities_k))])  # add additional constraints and inherit functionality from [0, 1] decision set
 
