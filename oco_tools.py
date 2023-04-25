@@ -55,12 +55,12 @@ class ZeroOneDecisionSet:
             cp.sum_squares(x - y_param))  # Euclidean projection finds the closest point in the set to unfeasible y
         self.y_param = y_param  # Store unfeasible  variable
         self.x = x  # Store decision variable
-        self.prob = cp.Problem(self.obj, [self._default_constraint])  # Store problem instance
+        self.prob = cp.Problem(self.obj, self._default_constraint)  # Store problem instance
 
     def setup_constraints(self, additional_constraints):
         # Each time additional constraints are introduced redefine the problem. Usually setup_constraints should only
         # be called in the constructor method.
-        prob = cp.Problem(self.obj, [self._default_constraint] + additional_constraints)
+        prob = cp.Problem(self.obj, self._default_constraint + additional_constraints)
         self.prob = prob
 
     def project_euclidean(self, y, warm_start=True):  # perform euclidean projection
@@ -75,6 +75,13 @@ class ZeroOneDecisionSet:
 class RelaxedPartitionMatroid(ZeroOneDecisionSet):
     def __init__(self, n, cardinalities_k, sets_S):
         super().__init__(n)
+        # constraints =[]
+        # for i in range(len(cardinalities_k)):
+        #     print(sets_S[i])
+        #     print(type(sets_S[i]))
+        #     constraints.append(cp.sum(self.x[sets_S[i]]) <= cardinalities_k[i])
+        # print(constraints)
+        # self.setup_constraints(constraints)
         self.setup_constraints([cp.sum(self.x[sets_S[i]]) <= cardinalities_k[i] for i in range(
             len(cardinalities_k))])  # add additional constraints and inherit functionality from [0, 1] decision set
 

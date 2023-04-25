@@ -143,8 +143,8 @@ class Problem(object):
         params['C'] = C
         params['b'] = np.ones(C)
         params['w'] = np.ones(n)
-        params['S'] = set(wdnf_dict.keys())
-        params['c'] = wdnf_dict.values()
+        params['S'] = set(self.wdnf_dict.keys())
+        params['c'] = self.wdnf_dict.values()
         #extensive tests will be added
         return ThresholdObjective(params)
 
@@ -198,8 +198,7 @@ class InfluenceMaximization(Problem):
         self.dependencies = dependencies
         sys.stderr.write("dependencies are " + str(dependencies) + '\n')
         logging.info('... done. An instance of a influence maximization problem has been created.')
-        
-    def translate():
+    
         
     def get_solver(self):
         """
