@@ -136,17 +136,30 @@ class Problem(object):
     def translate(self):
         """ takes self.wdnf_dict and returns the params of a ThresholdObjective
         """
-        params = dict()
-        n = self.problemSize
-        params['n'] = n
-        C = len(self.wdnf_dict)
-        params['C'] = C
-        params['b'] = np.ones(C)
-        params['w'] = np.ones(n)
-        params['S'] = set(self.wdnf_dict.keys())
-        params['c'] = self.wdnf_dict.values()
-        #extensive tests will be added
-        return ThresholdObjective(params)
+        threshold_objectives = []
+        for graph in self.wdnf_dict:
+            params = dict()
+            n = self.problemSize
+            # sys.stderr.write('n: ' + str(n) + '\n')
+            params['n'] = n
+            wdnfs = self.wdnf_dict[graph]
+            del wdnfs.coefficients[()]
+            # sys.stderr.write('wdnfs: ' + str(wdnfs.coefficients) + '\n')
+            C = len(wdnfs.coefficients)
+            # sys.stderr.write('C: ' + str(C) + '\n')
+            params['C'] = C
+            # sys.stderr.write('b: ' + str(np.ones(C)) + '\n')
+            params['b'] = np.ones(C)
+            # sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
+            params['w'] = np.ones((C, n))
+            # print(list(self.wdnf_dict.keys()))
+            # sys.stderr.write('S: ' + str(list(wdnfs.coefficients.keys())) + '\n')
+            params['S'] = [list(key) for key in list(wdnfs.coefficients.keys())] #list(self.wdnf_dict.keys())
+            # sys.stderr.write('c: ' + str(list(wdnfs.coefficients.values())) + '\n')
+            params['c'] = list(wdnfs.coefficients.values())
+            #extensive tests will be added
+            threshold_objectives.append(ThresholdObjective(params))
+        return threshold_objectives
 
 
 class InfluenceMaximization(Problem):
@@ -196,7 +209,7 @@ class InfluenceMaximization(Problem):
         self.wdnf_dict = wdnf_dict
         self.utility_function = np.log1p
         self.dependencies = dependencies
-        sys.stderr.write("dependencies are " + str(dependencies) + '\n')
+        sys.stderr.write("wdnf_dict is " + str(wdnf_dict) + '\n')
         logging.info('... done. An instance of a influence maximization problem has been created.')
     
         

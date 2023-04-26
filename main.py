@@ -73,6 +73,7 @@ if __name__ == "__main__":
     
     ### GENERATE THE ThresholdObjective OBJECT
     new_objective = newProblem.translate() ## TODO test what new_objective returns
+    # print(new_objective[0].params)
     
     
     ### CREATE THE OUTPUT DIRECTORY TO SAVE THE RESULTS IF NOT ALREADY EXISTS
@@ -90,21 +91,21 @@ if __name__ == "__main__":
 
     ### GENERATE THE OCOPolicy OBJECT
     if args.policy == 'OGD':
-        newPolicy = OGDPolicy(new_decision_set, eta, new_objective) ## TODO this class is not defined yet
+        newPolicy = OCOPolicy(new_decision_set, eta, new_objective[0])
         logging.info("An Online Gradient Descent policy is generated.")
         
     elif args.policy == 'BanditOGD':
-        newPolicy = BanditOGDPolicy(new_decision_set, eta, new_objective) ## TODO this class is not defined yet
+        newPolicy = BanditOGDPolicy(new_decision_set, eta, new_objective)  # TODO this class is not defined yet
         logging.info("A Bandit Online Gradient Descent policy is generated.")
         pass
     
-    elif args.policy == 'whatever': ## TODO change with policy names
+    elif args.policy == 'whatever':  # TODO change with policy names
         newPolicy = OCOPolicy(new_decision_set, eta, new_objective) 
         logging.info("An Online Convex Optimization policy is generated.")
         pass
 
     
-    #RUN THE OCOPolicy
+    ## RUN THE OCOPolicy
     while newPolicy.current_iteration < args.T:
         # TODO design backups if the algorithm is interrupted
         logging.info("Running iteration #{x}...\n".format(x=newPolicy.current_iteration)) ## TODO format string
