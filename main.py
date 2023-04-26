@@ -115,6 +115,8 @@ if __name__ == "__main__":
     #SAVE THE RESULTS OF THE OCOPolicy
     final_frac_rewards = newPolicy.frac_rewards
     final_int_rewards = newPolicy.int_rewards
+    print("frac rewards: " + str(final_frac_rewards))
+    print("int rewards: " + str(final_int_rewards))
     
     save(frac_output, final_frac_rewards)
     save(int_output, final_int_rewards)

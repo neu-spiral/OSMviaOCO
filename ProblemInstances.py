@@ -154,9 +154,9 @@ class Problem(object):
             params['w'] = np.ones((C, n))
             # print(list(self.wdnf_dict.keys()))
             # sys.stderr.write('S: ' + str(list(wdnfs.coefficients.keys())) + '\n')
-            params['S'] = [list(key) for key in list(wdnfs.coefficients.keys())] #list(self.wdnf_dict.keys())
+            params['S'] = [list(key) for key in list(wdnfs.coefficients.keys())]
             # sys.stderr.write('c: ' + str(list(wdnfs.coefficients.values())) + '\n')
-            params['c'] = list(wdnfs.coefficients.values())
+            params['c'] = [-1 * value for value in list(wdnfs.coefficients.values())]
             #extensive tests will be added
             threshold_objectives.append(ThresholdObjective(params))
         return threshold_objectives
