@@ -103,7 +103,7 @@ class RelaxedPartitionMatroid(ZeroOneDecisionSet):
 
         self.sets_S = sets_S
         self.cardinalities_k = cardinalities_k
-        self.setup_constraints([cp.sum(self.x[sets_S[i]]) <= (cardinalities_k[i]) * (
+        self.setup_constraints([cp.sum(self.x[sets_S[i]]) == (cardinalities_k[i]) * (
                 1 - 2 * self.sigma * self.n) + self.sigma * len(sets_S[i]) for i in range(
             len(cardinalities_k))])  # add additional consrain
         # ts and inherit functionality from [0, 1] decision set
