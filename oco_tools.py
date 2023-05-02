@@ -1,9 +1,13 @@
+from typing import Type
+
 import numpy as np
 import cvxpy as cp
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 from itertools import product
+
+from helpers import partition_matroid_round, sample_spherical
 
 
 class ThresholdObjective:
@@ -34,107 +38,157 @@ class ThresholdObjective:
     def eval(self, x):
         x = np.array(x)
         obj = 0
-        for i in range(self.C):
+        for i in self.C:
             w = np.array(self.w[i])
-            # print(self.S[i])
-            # print(w)
             obj += self.c[i] * np.min([sum(x[self.S[i]] * w[self.S[i]]), self.b[i]])
         return obj  # Evaluate the function
 
     def supergradient(self, x):
         x = np.array(x)
-        is_saturated = [np.sum(x[self.S[i]]) <= self.b[i] for i in range(self.C)]
+        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in self.C]
         return np.array(
-            [np.sum([self.w[i][k] * int(k in self.S[i] and is_saturated[i]) for i in range(self.C)]) for k in
+            [np.sum([self.c[i] * self.w[i][k] * int(k in self.S[i] and is_not_saturated[i]) for i in self.C]) for k in
              range(x.size)])  # Evaluate supergradient
 
 
 class ZeroOneDecisionSet:
-    def __init__(self, n):  # requires problem dimension n
+    def __init__(self, n, gamma=0, sigma=0):  # requires problem dimension n
         self.n = n
-        x = cp.Variable(n, nonneg=True)  # x >=0 by default
-        self._default_constraint = [x <= 1]  # x<= 1 by default
+        self.gamma = gamma
+        self.sigma = sigma
+        x = cp.Variable(n)  # x >=0 by default
+        self.constraints = [x <= 1 - 2 * sigma * n + sigma, x >= sigma]  # x<= 1 by default
         y_param = cp.Parameter(
             n)  # define (unfeasible) point that you wish to project as a parameter of the projection problem
-        self.obj = cp.Minimize(
-            cp.sum_squares(x - y_param))  # Euclidean projection finds the closest point in the set to unfeasible y
+
         self.y_param = y_param  # Store unfeasible  variable
         self.x = x  # Store decision variable
-        self.prob = cp.Problem(self.obj, self._default_constraint)  # Store problem instance
+        self.euclidean_prob = None
+        self.bregman_prob = None
 
     def setup_constraints(self, additional_constraints):
         # Each time additional constraints are introduced redefine the problem. Usually setup_constraints should only
         # be called in the constructor method.
-        prob = cp.Problem(self.obj, self._default_constraint + additional_constraints)
-        self.prob = prob
+        self.constraints += additional_constraints
 
     def project_euclidean(self, y, warm_start=True):  # perform euclidean projection
+        if self.euclidean_prob is None:
+            self.euclidean_obj = cp.Minimize(
+                cp.sum_squares(
+                    self.x - self.y_param))  # Euclidean projection finds the closest point in the set to unfeasible y
+            self.euclidean_prob = cp.Problem(self.euclidean_obj, self.constraints)  # Store problem instance
         self.y_param.value = y  # replace parameter value
-        self.prob.solve(
+        self.euclidean_prob.solve(
             warm_start=warm_start)  # Solve with warm start. When y is not that different from the previous one,
         # it should be faster.
         return self.x.value  # return projected point
-    # other projection schemes will be added
+
+    def project_bregman(self, y, warm_start=False):
+        if self.bregman_prob is None:
+            divergence = cp.sum(- cp.entr(self.x + self.gamma)) + cp.sum(
+                - cp.multiply((self.x + self.gamma), cp.log(self.y_param + self.gamma)))
+            self.bregman_obj = cp.Minimize(
+                divergence)  # Euclidean projection finds the closest point in the set to unfeasible y
+            self.bregman_prob = cp.Problem(self.bregman_obj, self.constraints)  # Store problem instance
+        self.y_param.value = y  # replace parameter value
+        self.bregman_prob.solve(
+            warm_start=warm_start)  # Solve with warm start. When y is not that different from the previous one,
+        # it should be faster.
+        return self.x.value  # return projected point
 
 
 class RelaxedPartitionMatroid(ZeroOneDecisionSet):
-    def __init__(self, n, cardinalities_k, sets_S):
-        super().__init__(n)
+    def __init__(self, n, cardinalities_k, sets_S, gamma, sigma):
+        super().__init__(n, gamma, sigma)
+
         self.sets_S = sets_S
-        self.setup_constraints([cp.sum(self.x[sets_S[i]]) <= cardinalities_k[i] for i in range(
-            len(cardinalities_k))])  # add additional constraints and inherit functionality from [0, 1] decision set
-        
-        
+        self.cardinalities_k = cardinalities_k
+        self.setup_constraints([cp.sum(self.x[sets_S[i]]) <= (cardinalities_k[i]) * (
+                1 - 2 * self.sigma * self.n) + self.sigma * len(sets_S[i]) for i in range(
+            len(cardinalities_k))])  # add additional consrain
+        # ts and inherit functionality from [0, 1] decision set
+
+
 class OCOPolicy:
-    def __init__(self, decision_set: ZeroOneDecisionSet, eta: float, objective: ThresholdObjective):
+    def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float):
         self.eta = eta
         self.objective = objective  # Requires objective
         self.decision_set = decision_set  # Requires decision set #y
         self.frac_rewards = []
         self.int_rewards = []
         self.decision = np.zeros(decision_set.n)
+        self.decisions = []
         self.current_iteration = 1
+        if isinstance(decision_set, RelaxedPartitionMatroid):
+            self.decision = np.zeros(decision_set.n)
+            for S, k in zip(decision_set.sets_S, decision_set.cardinalities_k):
+                self.decision[S] = k / len(S)
+            self.decision = self.decision_set.project_euclidean(self.decision)
+        else:
+            raise Exception('Not implemented')
 
-    def step(self, eta=None):
-        if eta is None:
-            eta = self.eta  # Set time varying learning rate
-        frac_reward = self.objective.eval(self.decision) #what is self.decision
+    def step(self):
+        frac_reward = self.objective.eval(self.decision)  # what is self.decision
+        self.decisions.append(self.decision)
         int_reward = self.objective.eval(self.round(self.decision))
-        supergradient = self.objective.supergradient(self.decision)  # Compute supergradient
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
         self.int_rewards.append(int_reward)  # Collect value of integral reward
-        self.decision = self.decision_set.project_euclidean(self.decision + eta * supergradient)  # Take gradient step
         self.current_iteration += 1
 
     def round(self, x):
+        if isinstance(self.decision_set, RelaxedPartitionMatroid):
+            return partition_matroid_round(np.copy(x), self.decision_set.sets_S)
+        else:
+            raise Exception(f'Rounding procedure for {type(self.decision_set)} is not implemented.')
 
-        def simplify(a, b):
-            if a + b <= 1:
-                c = np.random.choice([0, 1], p=[a / (a + b), b / (a + b)])
-                return [a + b, 0] if c == 0 else [0, a + b]
-            elif 1 < a + b < 2:
-                c = np.random.choice([0, 1], p=[(1 - b) / (2 - a - b), (1 - a) / (2 - a - b)])
-                return [1, a + b - 1] if c == 0 else [a + b - 1, 1]
 
-        def depround(x):
-            while (True):
-                not_rounded = np.where(np.logical_and(x < 1, x > 0))[0]
-                if len(not_rounded) == 0:
-                    break
-                elif len(not_rounded) == 1:
-                    if x[not_rounded[0]] > 0.99:
-                        x[not_rounded[0]] = 1
-                    elif x[not_rounded[0]] < 0.01:
-                        x[not_rounded[0]] = 0
-                    break
-                # print(not_rounded, x)
-                i, j = not_rounded[:2]
-                x[i], x[j] = simplify(x[i], x[j])
-            return x
+class OGA(OCOPolicy):
+    def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float, bandit=False):
+        super().__init__(decision_set, objective, eta)
+        # if decision_set.sigma == 0 and bandit:
+        #     raise Exception('Bandit setting cannot run with a nil exploration parameter')
+        self.bandit = bandit
 
-        def partition_matroid_round(x, sets_S):
-            for S in sets_S:
-                x[S] = depround(x[S])
-            return x
+    def step(self, eta=None, decision=None, supergradient=None):
+        super().step()
+        if self.bandit:
+            u = sample_spherical(self.decision_set.n)
+            self.supergradient = u * self.objective.eval(self.decision + self.decision_set.sigma * u)
+        else:
+            self.supergradient = self.objective.supergradient(self.decision)  # Compute supergradient
 
-        return partition_matroid_round(x, self.decision_set.sets_S)
+        eta = self.eta if eta is None else eta
+        decision = self.decision if decision is None else decision
+        supergradient = self.supergradient if supergradient is None else supergradient
+        self.decision = self.decision_set.project_euclidean(
+            decision + eta * supergradient)  # Take gradient step
+
+
+class ShiftedNegativeEntropyOMD(OCOPolicy):
+    def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float):
+        super().__init__(decision_set, objective, eta)
+
+    def step(self, eta=None, decision=None, supergradient=None):
+        super().step()
+        self.supergradient = self.objective.supergradient(self.decision)  # Compute supergradient
+        eta = self.eta if eta is None else eta
+        decision = self.decision if decision is None else decision
+        supergradient = self.supergradient if supergradient is None else supergradient
+        self.decision_z = (self.decision + self.decision_set.gamma) * np.exp(
+            eta * self.supergradient) - self.decision_set.gamma
+        self.decision = self.decision_set.project_bregman(self.decision_z)  # Take gradient step
+
+
+class OptimisticPolicy(OCOPolicy):
+    def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, Policy: Type[OCOPolicy],
+                 eta: float):
+        super().__init__(decision_set, objective, eta)
+        self.policyPrimary = Policy(decision_set, objective, eta=eta)
+        self.policySecondary = Policy(decision_set, objective, eta=eta)
+
+    def step(self, eta=None, pred=None):
+        self.supergradient = self.objective.supergradient(self.decision)  # Compute supergradient
+        super().step()
+        self.policySecondary.step(eta=eta, supergradient=self.supergradient)
+        self.policyPrimary.step(eta=eta, decision=np.copy(self.policySecondary.decision), supergradient=np.array(pred))
+        self.decision = self.policyPrimary.decision
