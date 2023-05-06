@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import math
 
-from problem import Problem, InfluenceMaximization
+import sys
+sys.path.append('../')
+
+from ProblemInstances import Problem, InfluenceMaximization
 from mapping import WDNFMapping
 from offline_alg import ApproxGreedy
 from online_alg import KKL
