@@ -6,11 +6,7 @@ import math
 import sys
 sys.path.append('../')
 
-from ProblemInstances import Problem, InfluenceMaximization
-from mapping import WDNFMapping
-from offline_alg import ApproxGreedy
-from online_alg import KKL
-from game import Game
+from ProblemInstances import Problem
 
 class Translator:
     def __init__(self, problem:Problem):
@@ -67,47 +63,47 @@ class Translator:
         '''
         self.ws = [self.find_w(wdnf, set_to_index) for wdnf in wdnfs]
 
-if __name__ == "__main__":
-    graph = nx.gn_graph(10) 
-    graphs = [graph] * 10
-    constraints = 5
-    problem = InfluenceMaximization(graphs, constraints)
-    translator = Translator(problem)
-    ws = translator.ws
-    n = translator.n # dimension of action s
-    m = translator.m # dimension of Phi(s)
-    T = translator.T # horizon
-    sign = translator.sign # sign used in the wdnf functions
-    index_to_set = translator.index_to_set
-    ground_set = problem.groundSet
+# if __name__ == "__main__":
+#     graph = nx.gn_graph(10) 
+#     graphs = [graph] * 10
+#     constraints = 5
+#     problem = InfluenceMaximization(graphs, constraints)
+#     translator = Translator(problem)
+#     ws = translator.ws
+#     n = translator.n # dimension of action s
+#     m = translator.m # dimension of Phi(s)
+#     T = translator.T # horizon
+#     sign = translator.sign # sign used in the wdnf functions
+#     index_to_set = translator.index_to_set
+#     ground_set = problem.groundSet
 
-    mapping = WDNFMapping(n, index_to_set, sign)
-    linear_solver = problem.get_solver()
-    initial_point = problem.get_initial_point()
-    approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n)
+#     mapping = WDNFMapping(n, index_to_set, sign)
+#     linear_solver = problem.get_solver()
+#     initial_point = problem.get_initial_point()
+#     approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n)
 
 
-    # set constants
-    W = max([np.linalg.norm(w) for w in ws]) # ||w|| <= W
-    R = np.sqrt(m) # ||Phi(s)|| <= R
-    alpha = math.e
-    delta = (alpha + 1) * R**2 / T
-    eta = (alpha + 1) * R / (W * np.sqrt(T))
+#     # set constants
+#     W = max([np.linalg.norm(w) for w in ws]) # ||w|| <= W
+#     R = np.sqrt(m) # ||Phi(s)|| <= R
+#     alpha = math.e
+#     delta = (alpha + 1) * R**2 / T
+#     eta = (alpha + 1) * R / (W * np.sqrt(T))
 
-    # initialize online algorithm
-    alg = KKL(approx_alg, mapping, alpha, delta, eta, R, n)
+#     # initialize online algorithm
+#     alg = KKL(approx_alg, mapping, alpha, delta, eta, R, n)
 
-    # initialize game
-    game = Game(alg, mapping, ws, n, T)
+#     # initialize game
+#     game = Game(alg, mapping, ws, n, T)
 
-    game.play()
+#     game.play()
 
-    timesteps = np.arange(T) + 1
-    cum_avg_reward = game.get_cum_avg_reward()
+#     timesteps = np.arange(T) + 1
+#     cum_avg_reward = game.get_cum_avg_reward()
     
     
-    plt.plot(timesteps, cum_avg_reward, "-o")
-    plt.xlabel("timestep")
-    plt.ylabel("average reward")
-    plt.title("Cummulative average reward")
-    plt.show()
+#     plt.plot(timesteps, cum_avg_reward, "-o")
+#     plt.xlabel("timestep")
+#     plt.ylabel("average reward")
+#     plt.title("Cummulative average reward")
+#     plt.show()
