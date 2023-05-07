@@ -18,7 +18,7 @@ class WDNFMapping(Mapping):
     def Phi(self, s:np.ndarray) -> np.ndarray:
         ''' Maps a decision s \in R^n to a vector in R^m '''
         phi = np.zeros(self.m)
-        for i in range(self.n):
+        for i in range(self.m):
             set = self.index_to_set[i] # returns a tuple
             if self.sign == -1:
                 phi[i] = np.prod([1 - s[j] for j in set])

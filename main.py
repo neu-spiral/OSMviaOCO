@@ -1,20 +1,27 @@
 from helpers import save, load
 from ProblemInstances import InfluenceMaximization, FacilityLocation
 from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OCOPolicy
+
+from KKL.translate import Translator
+from KKL.mapping import WDNFMapping
+from KKL.offline_alg import ApproxGreedy
+from KKL.online_alg import KKL
+from KKL.game import Game
+
 from time import time
 import args
 import logging
 import numpy as np
+import math
 import os
 import pickle
 import sys
-
 
 if __name__ == "__main__":
     
     parser = args.create_parser()
     args = parser.parse_args()
-
+    
     eta = args.eta
     logging.basicConfig(level=logging.INFO)
 
@@ -45,6 +52,7 @@ if __name__ == "__main__":
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
         elif args.problemType == 'IM':
+            print("IM problem")
             logging.info('Loading cascades...')
             graphs = load(args.input) # this needs a list of graphs
             if args.partitions is not None:
@@ -56,10 +64,11 @@ if __name__ == "__main__":
             logging.info('...done. Just loaded %d cascades.' %(len(graphs)))
             logging.info('Defining an InfluenceMaximization problem...')
             newProblem = InfluenceMaximization(graphs, k_list, target_partitions)
-            cardinalities_k = list(k_list.values())
-            sets_S = list(target_partitions.values())
-            sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
-            new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S) 
+            if args.policy != 'KKL':
+                cardinalities_k = list(k_list.values())
+                sets_S = list(target_partitions.values())
+                sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
+                new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S) 
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
         #generate a file for problems if it does not already exists
@@ -99,29 +108,62 @@ if __name__ == "__main__":
         newPolicy = BanditOGDPolicy(new_decision_set, eta, new_objective)  # TODO this class is not defined yet
         logging.info("A Bandit Online Gradient Descent policy is generated.")
         pass
-    
+
+    elif args.policy == 'KKL':
+        logging.info("A KKL policy is generated.")
+        translator = Translator(newProblem)
+        ws = translator.ws
+        n = translator.n # dimension of action s
+        m = translator.m # dimension of Phi(s)
+        T = translator.T # horizon
+        sign = translator.sign # sign used in the wdnf functions
+        index_to_set = translator.index_to_set
+        ground_set = newProblem.groundSet
+
+        mapping = WDNFMapping(n, index_to_set, sign)
+        linear_solver = newProblem.get_solver()
+        initial_point = newProblem.get_initial_point()
+        approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n)
+
+        # set constants
+        W = max([np.linalg.norm(w) for w in ws]) # ||w|| <= W
+        R = np.sqrt(m) # ||Phi(s)|| <= R
+        alpha = math.e
+        delta = (alpha + 1) * R**2 / T
+        eta = (alpha + 1) * R / (W * np.sqrt(T))
+
+        # initialize online algorithm
+        alg = KKL(approx_alg, mapping, alpha, delta, eta, R, n)
+
+        # initialize game
+        game = Game(alg, mapping, ws, n, T)
+
     elif args.policy == 'whatever':  # TODO change with policy names
         newPolicy = OCOPolicy(new_decision_set, eta, new_objective) 
         logging.info("An Online Convex Optimization policy is generated.")
         pass
 
-    elif args.policy == 'KKL':  # TODO change with policy names
-        pass
+    if args.policy in ['OGD', 'BanditOGD']:
+        ## RUN THE OCOPolicy
+        while newPolicy.current_iteration < args.T:
+            # TODO design backups if the algorithm is interrupted
+            logging.info("Running iteration #{x}...\n".format(x=newPolicy.current_iteration)) ## TODO format string
+            newPolicy.step()
+        logging.info("The algorithm is finished.")
+        
+        #SAVE THE RESULTS OF THE OCOPolicy
+        final_frac_rewards = newPolicy.frac_rewards
+        final_int_rewards = newPolicy.int_rewards
+        print("frac rewards: " + str(final_frac_rewards))
+        print("int rewards: " + str(final_int_rewards))
+    
+        save(frac_output, final_frac_rewards)
+        save(int_output, final_int_rewards)
+        logging.info("The rewards are saved to: " + output_dir + ".")
 
-    
-    ## RUN THE OCOPolicy
-    while newPolicy.current_iteration < args.T:
-        # TODO design backups if the algorithm is interrupted
-        logging.info("Running iteration #{x}...\n".format(x=newPolicy.current_iteration)) ## TODO format string
-        newPolicy.step()
-    logging.info("The algorithm is finished.")
-    
-    #SAVE THE RESULTS OF THE OCOPolicy
-    final_frac_rewards = newPolicy.frac_rewards
-    final_int_rewards = newPolicy.int_rewards
-    print("frac rewards: " + str(final_frac_rewards))
-    print("int rewards: " + str(final_int_rewards))
-    
-    save(frac_output, final_frac_rewards)
-    save(int_output, final_int_rewards)
-    logging.info("The rewards are saved to: " + output_dir + ".")
+    if args.policy == 'KKL':
+        game.play()
+        cum_avg_reward = game.get_cum_avg_reward()
+        print(f"cum_avg_reward: {cum_avg_reward}")
+        save(frac_output, cum_avg_reward)
+        logging.info("The rewards are saved to: " + output_dir + ".")

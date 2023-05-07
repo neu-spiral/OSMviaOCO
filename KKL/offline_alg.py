@@ -1,5 +1,9 @@
+import sys
+sys.path.append('../')
+sys.path.append('../KKL')
+
 import numpy as np
-from continuous_greedy import ContinuousGreedy, LinearSolver, SamplerEstimator
+from ContinuousGreedy import ContinuousGreedy, LinearSolver, SamplerEstimator
 from mapping import Mapping
 
 class ApproxAlgorithm:
