@@ -17,7 +17,6 @@ import os
 import pickle
 import sys
 
-
 if __name__ == "__main__":
     
     parser = args.create_parser()
@@ -64,10 +63,11 @@ if __name__ == "__main__":
             logging.info('...done. Just loaded %d cascades.' %(len(graphs)))
             logging.info('Defining an InfluenceMaximization problem...')
             newProblem = InfluenceMaximization(graphs, k_list, target_partitions)
-            cardinalities_k = list(k_list.values())
-            sets_S = list(target_partitions.values())
-            sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
-            new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S) 
+            if args.policy != 'KKL':
+                cardinalities_k = list(k_list.values())
+                sets_S = list(target_partitions.values())
+                sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
+                new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S) 
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
         #generate a file for problems if it does not already exists
@@ -165,3 +165,4 @@ if __name__ == "__main__":
         cum_avg_reward = game.get_cum_avg_reward()
         print(f"cum_avg_reward: {cum_avg_reward}")
         save(frac_output, cum_avg_reward)
+        logging.info("The rewards are saved to: " + output_dir + ".")

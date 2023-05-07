@@ -24,11 +24,17 @@ class Game:
         '''
         action = self.algorithm.play(self.history)
 
+        assert len(action) == self.n, f"dimension of actions is {len(action)} != {self.n}"
+        assert np.all(action >= -0.001), "action < 0"
+        assert np.all(action <= 1.001), "s > 1"
+
         if not self.isValid(action):
             raise Exception(f"Game play method, action s = {action} is not a valid action")
         
         w = self.ws[self.timestep] # get w_t
         feedback = np.dot(self.mapping.Phi(action), w)
+
+        assert feedback >= -0.001 , f"feedback = {feedback} < 0"
 
         # update history
         self.history.append((feedback, w))
@@ -44,14 +50,11 @@ class Game:
             
 
     def play(self):
-        ''' play all rounds starting '''
-        print_interval = self.horizon * 0.1
+        ''' play all rounds '''
         for t in range(self.horizon):
             action, feedback, w = self.next()
             self.reward_history.append(feedback)
             self.action_history.append(action)
-            if t % print_interval == 0:
-                print(f"Progress: {t / self.horizon}")
 
     def get_reward_history(self) -> np.ndarray:
         return np.array(self.reward_history)
