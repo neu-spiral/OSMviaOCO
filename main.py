@@ -30,22 +30,23 @@ if __name__ == "__main__":
     else:
         if args.problemType == 'FL':
             logging.info('Loading movie ratings...')
-            bipartite_graph = load(args.input)
+            bipartite_graph = load(args.input) # this needs one single bipartite graph
+            bipartite_graph = bipartite_graph[0]
             target_partitions = load(args.partitions)
-            k_list = dict.fromkeys(target_partitions.keys(), 0)
-            k_list['Drama'] = args.constraints
-            k_list['Comedy'] = args.constraints
+            k_list = dict.fromkeys(target_partitions.keys(), args.k)
+            # k_list['Drama'] = args.constraints
+            # k_list['Comedy'] = args.constraints
             logging.info('...done. Defining a FacilityLocation Problem...')
             newProblem = FacilityLocation(bipartite_graph, k_list, target_partitions)
             cardinalities_k = list(k_list.values())
             sets_S = list(target_partitions.values())
             sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
-            new_decision_set = RelaxedPartitionMatroid(newProblem.X, k_list, target_partitions) ##make sure the k_list and target_partiotions formats fit to cardinalities_k, sets_S format
-            logging.info('...done. %d seeds will be selected from each partition.' % args.constraints)
+            new_decision_set = RelaxedPartitionMatroid(newProblem.size, cardinalities_k, sets_S) ##make sure the k_list and target_partiotions formats fit to cardinalities_k, sets_S format
+            logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
         elif args.problemType == 'IM':
             logging.info('Loading cascades...')
-            graphs = load(args.input)
+            graphs = load(args.input) # this needs a list of graphs
             if args.partitions is not None:
                 target_partitions = load(args.partitions)
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
@@ -102,6 +103,9 @@ if __name__ == "__main__":
     elif args.policy == 'whatever':  # TODO change with policy names
         newPolicy = OCOPolicy(new_decision_set, eta, new_objective) 
         logging.info("An Online Convex Optimization policy is generated.")
+        pass
+
+    elif args.policy == 'KKL':  # TODO change with policy names
         pass
 
     

@@ -313,11 +313,11 @@ class FacilityLocation(Problem):
                     weights[facility] = bipartite_graph.get_edge_data(str(facility), y)['weight']
                 except TypeError:
                     weights[facility] = 0.0
-            weights[len(self.X) + 1] = 0.0
+            weights[len(list(self.X)) + 1] = 0.0
             descending_weights = sorted(weights.values(), reverse=True)
-            indices = sorted(range(len(weights.values())), key=lambda k: weights.values()[k], reverse=True)
+            indices = sorted(range(len(weights.values())), key=lambda k: list(weights.values())[k], reverse=True)
             wdnf_so_far = WDNF(dict(), -1)
-            for i in range(len(self.X)):
+            for i in range(len(list(self.X))):
                 index = tuple(int(weights.keys()[index]) for index in indices[:(i + 1)])
                 wdnf_so_far += (descending_weights[i] - descending_weights[i + 1]) * \
                                (WDNF({(): 1.0}, -1) + (-1.0) * WDNF({index: 1.0}, -1))
