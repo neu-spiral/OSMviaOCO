@@ -1,7 +1,9 @@
 import random
 import numpy as np
-from mapping import WDNFMapping
-from offline_alg import ApproxAlgorithm
+from KKL.mapping import WDNFMapping
+from KKL.offline_alg import ApproxAlgorithm
+from typing import Tuple
+
 
 class KKL:
     def __init__(self, approx_alg:ApproxAlgorithm, 
@@ -29,7 +31,7 @@ class KKL:
         
         return self.s
 
-    def approx_proj(self, z:np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    def approx_proj(self, z:np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         ''' APPROX-PROJ algorithm '''
         s = np.zeros(self.n)
         x = self.mapping.Phi(s)

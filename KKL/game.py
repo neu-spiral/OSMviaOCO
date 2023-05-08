@@ -1,10 +1,16 @@
 import numpy as np
 from collections import deque
-from online_alg import KKL
-from mapping import Mapping
+from KKL.online_alg import KKL
+from KKL.mapping import Mapping
+from typing import List, Tuple
+
 
 class Game:
-    def __init__(self, alg:KKL, mapping:Mapping, ws:list[np.ndarray], n:int, horizon:int):
+    def __init__(self, alg:KKL, mapping:Mapping, ws: List[np.ndarray], n:int, horizon:int):
+        """
+
+        :type n: object
+        """
         self.algorithm = alg    # online algorithm
         self.ws = ws            # list of "weight" vectors
         self.horizon = horizon  # T
@@ -17,7 +23,7 @@ class Game:
         self.action_history = deque()
         self.timestep = 0
 
-    def next(self) -> tuple[np.ndarray, float, np.ndarray]:
+    def next(self) -> Tuple[np.ndarray, float, np.ndarray]:
         ''' 
             play the next action, receive feedback, update history
             Output: action, feedback, w

@@ -48,8 +48,9 @@ if __name__ == "__main__":
             cardinalities_k = list(k_list.values())
             sets_S = list(target_partitions.values())
             sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
-            new_decision_set = RelaxedPartitionMatroid(newProblem.size, cardinalities_k,
-                                                       sets_S)  ##make sure the k_list and target_partiotions formats fit to cardinalities_k, sets_S format
+            new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k,
+                                                       sets_S)  # make sure the k_list and target_partitions
+            # formats fit to cardinalities_k, sets_S format
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
         elif args.problemType == 'IM':
@@ -142,11 +143,6 @@ if __name__ == "__main__":
 
         # initialize game
         game = Game(alg, mapping, ws, n, T)
-
-    elif args.policy == 'whatever':  # TODO change with policy names
-        newPolicy = OCOPolicy(new_decision_set, eta, new_objective)
-        logging.info("An Online Convex Optimization policy is generated.")
-        pass
 
     if args.policy in ['OGD', 'BanditOGD']:
         ## RUN THE OCOPolicy

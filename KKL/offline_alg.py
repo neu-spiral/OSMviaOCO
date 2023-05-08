@@ -4,7 +4,7 @@ sys.path.append('../KKL')
 
 import numpy as np
 from ContinuousGreedy import ContinuousGreedy, LinearSolver, SamplerEstimator
-from mapping import Mapping
+from KKL.mapping import Mapping
 
 class ApproxAlgorithm:
     def solve(self, w:np.ndarray) -> np.ndarray:

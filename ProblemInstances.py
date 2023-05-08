@@ -132,7 +132,7 @@ class Problem(object):
         new_cg = ContinuousGreedy(self.get_solver(), estimator, self.get_initial_point())
         logging.info('done.')
         return new_cg.fw(iterations, True, need_restart, backup_file)
-    
+
     def translate(self):
         """ takes self.wdnf_dict and returns the params of a ThresholdObjective
         """
@@ -140,24 +140,25 @@ class Problem(object):
         for graph in self.wdnf_dict:
             params = dict()
             n = self.problemSize
-            # sys.stderr.write('n: ' + str(n) + '\n')
+            sys.stderr.write('n: ' + str(n) + '\n')
             params['n'] = n
             wdnfs = self.wdnf_dict[graph]
-            del wdnfs.coefficients[()]
-            # sys.stderr.write('wdnfs: ' + str(wdnfs.coefficients) + '\n')
+            # del wdnfs.coefficients[()]
+            wdnfs.coefficients.pop((), None)
+            sys.stderr.write('wdnfs: ' + str(wdnfs.coefficients) + '\n')
             C = len(wdnfs.coefficients)
-            # sys.stderr.write('C: ' + str(C) + '\n')
+            sys.stderr.write('C: ' + str(C) + '\n')
             params['C'] = C
-            # sys.stderr.write('b: ' + str(np.ones(C)) + '\n')
+            sys.stderr.write('b: ' + str(np.ones(C)) + '\n')
             params['b'] = np.ones(C)
-            # sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
+            sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
             params['w'] = np.ones((C, n))
-            # print(list(self.wdnf_dict.keys()))
-            # sys.stderr.write('S: ' + str(list(wdnfs.coefficients.keys())) + '\n')
+            print(list(self.wdnf_dict.keys()))
+            sys.stderr.write('S: ' + str(list(wdnfs.coefficients.keys())) + '\n')
             params['S'] = [list(key) for key in list(wdnfs.coefficients.keys())]
-            # sys.stderr.write('c: ' + str(list(wdnfs.coefficients.values())) + '\n')
+            sys.stderr.write('c: ' + str(list(wdnfs.coefficients.values())) + '\n')
             params['c'] = [-1 * value for value in list(wdnfs.coefficients.values())]
-            #extensive tests will be added
+            # extensive tests will be added
             threshold_objectives.append(ThresholdObjective(params))
         return threshold_objectives
 
@@ -211,8 +212,7 @@ class InfluenceMaximization(Problem):
         self.dependencies = dependencies
         sys.stderr.write("wdnf_dict is " + str(wdnf_dict) + '\n')
         logging.info('... done. An instance of a influence maximization problem has been created.')
-    
-        
+
     def get_solver(self):
         """
         """
@@ -259,11 +259,11 @@ class InfluenceMaximization(Problem):
         """
         logging.info('Getting sampler estimators...')
         sampler_estimator_dict = dict()
-        for graph in self.wdnf_dict:  #change to inline (maybe)
-            new_objective_func = lambda x: self.utility_function(self.wdnf_dict[graph](x)) #this can be new_objective
+        for graph in self.wdnf_dict:  # change to inline (maybe)
+            new_objective_func = lambda x: self.utility_function(self.wdnf_dict[graph](x))  # this can be new_objective
             sampler_estimator_dict[graph] = SamplerEstimator(new_objective_func, num_of_samples, dependencies)
-        # sampler_estimator_dict = {graph: SamplerEstimator(self.wdnf_dict[graph], self.utility_function, num_of_samples,
-        #                                                   dependencies) for graph in self.wdnf_dict}
+        # sampler_estimator_dict = {graph: SamplerEstimator(self.wdnf_dict[graph], self.utility_function,
+        # num_of_samples, dependencies) for graph in self.wdnf_dict}
         logging.info('...done.')
         return StochasticGradientEstimator(sampler_estimator_dict)
 
@@ -301,7 +301,7 @@ class FacilityLocation(Problem):
         self.constraints = constraints
         # self.partitioned_set = dict.fromkeys(self.Y, self.X)  # ???
         self.target_partitions = target_partitions
-        self.size = len(self.Y)  # number of customers, users
+        self.problemSize = len(self.Y)  # number of customers, users
         wdnf_dict = dict()
         dependencies = dict()
         wdnf_lengths = []
@@ -324,6 +324,7 @@ class FacilityLocation(Problem):
                 if descending_weights[i + 1] == 0:
                     break
             wdnf_lengths.append(len(wdnf_so_far.coefficients))
+            print(str(y) + ": " + str(wdnf_so_far.coefficients))
             wdnf_dict[y] = wdnf_so_far
             dependencies.update(wdnf_so_far.find_dependencies())
         self.avg_wdnf_len = (sum(wdnf_lengths) * 1.0) / len(wdnf_lengths)
@@ -368,5 +369,4 @@ class FacilityLocation(Problem):
 
 
 if __name__ == "__main__":
-        B = 5
-
+    B = 5

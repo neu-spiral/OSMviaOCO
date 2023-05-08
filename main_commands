@@ -1,0 +1,1 @@
+python main.py --problemType FL --input datasets/RB1powerlaw_10_10_21 --partitions datasets/RB1powerlaw_10_10_21_partitions --policy OGD --eta 0.1 --k 2 --T 100
