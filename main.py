@@ -144,7 +144,7 @@ if __name__ == "__main__":
         # initialize game
         game = Game(alg, mapping, ws, n, T)
 
-    if args.policy in ['OGD', 'BanditOGD']:
+    if args.policy in ['OGD', 'OGA', 'OMD', 'Optimistic']:
         ## RUN THE OCOPolicy
         while newPolicy.current_iteration < args.T:
             # TODO design backups if the algorithm is interrupted
@@ -155,11 +155,19 @@ if __name__ == "__main__":
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards
         final_int_rewards = newPolicy.int_rewards
-        print("frac rewards: " + str(final_frac_rewards))
-        print("int rewards: " + str(final_int_rewards))
+        print(f"frac rewards: {final_frac_rewards}")
+        print(f"int rewards: {final_int_rewards}")
 
-        save(frac_output, final_frac_rewards)
-        save(int_output, final_int_rewards)
+        def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
+            return np.cumsum(rewards) / (np.arange(args.T) + 1)
+
+        cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
+        cum_int_rewards = get_cum_avg_reward(final_int_rewards)
+        print(f"cumulative averaged fractional  rewards: {cum_frac_rewards}")
+        print(f"cumulative averaged integral rewards: {cum_int_rewards}")
+
+        save(frac_output, cum_frac_rewards)
+        save(int_output, cum_int_rewards)
         logging.info("The rewards are saved to: " + output_dir + ".")
 
     if args.policy == 'KKL':
