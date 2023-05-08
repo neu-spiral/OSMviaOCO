@@ -155,6 +155,7 @@ if __name__ == "__main__":
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards
         final_int_rewards = newPolicy.int_rewards
+        running_time = newPolicy.running_time
         print(f"frac rewards: {final_frac_rewards}")
         print(f"int rewards: {final_int_rewards}")
 
@@ -163,11 +164,11 @@ if __name__ == "__main__":
 
         cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
         cum_int_rewards = get_cum_avg_reward(final_int_rewards)
-        print(f"cumulative averaged fractional  rewards: {cum_frac_rewards}")
+        print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
         print(f"cumulative averaged integral rewards: {cum_int_rewards}")
 
-        save(frac_output, cum_frac_rewards)
-        save(int_output, cum_int_rewards)
+        save(frac_output, [cum_frac_rewards, running_time])
+        save(int_output, [cum_int_rewards, running_time])
         logging.info("The rewards are saved to: " + output_dir + ".")
 
     if args.policy == 'KKL':

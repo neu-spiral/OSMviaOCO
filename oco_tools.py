@@ -1,13 +1,12 @@
+from helpers import partition_matroid_round, sample_spherical
+from itertools import product
+from time import time
 from typing import Type
-
 import numpy as np
 import cvxpy as cp
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import product
-
-from helpers import partition_matroid_round, sample_spherical
 
 
 class ThresholdObjective:
@@ -118,6 +117,7 @@ class OCOPolicy:
         self.int_rewards = []
         self.decision = np.zeros(decision_set.n)
         self.decisions = []
+        self.running_time = []
         self.current_iteration = 1
         if isinstance(decision_set, RelaxedPartitionMatroid):
             self.decision = np.zeros(decision_set.n)
@@ -128,12 +128,14 @@ class OCOPolicy:
             raise Exception('Not implemented')
 
     def step(self):
+        start = time()
         frac_reward = self.objective.eval(self.decision)  # what is self.decision
         self.decisions.append(self.decision)
         int_reward = self.objective.eval(self.round(self.decision))
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
         self.int_rewards.append(int_reward)  # Collect value of integral reward
         self.current_iteration += 1
+        self.running_time.append(time() - start)
 
     def round(self, x):
         if isinstance(self.decision_set, RelaxedPartitionMatroid):
