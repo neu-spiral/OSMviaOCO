@@ -18,4 +18,10 @@ def create_parser():
     parser.add_argument('--k', default=1, type=int, help='cardinality k for each partition')
     parser.add_argument('--T', default=100, type=int,
                         help='Number of iterations used in the maximization algorithm')
+    parser.add_argument('--traceType', default='sequential', type=str, help='Construction type of the trace list',
+                        choices=['sequential', 'random', 'custom'])
+    subparsers = parser.add_subparsers(dest='subcommand')
+    subparsers.required = False
+    parser_custom = subparsers.add_parser('custom')
+    parser_custom.add_argument('--trace', default=None, type=str, help='file that contains the trace of the policy')
     return parser

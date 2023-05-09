@@ -15,6 +15,7 @@ import numpy as np
 import math
 import os
 import pickle
+import random
 import sys
 
 if __name__ == "__main__":
@@ -23,6 +24,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     eta = args.eta
+    T = args.T
     logging.basicConfig(level=logging.INFO)
 
     ### LOAD OR GENERATE THE PROBLEM INSTANCE
@@ -82,9 +84,10 @@ if __name__ == "__main__":
         save(problem_dir + args.problemType + "_" + args.input.split("/")[-1] + "_k_" + str(args.k),
              newProblem)
 
-    ### GENERATE THE ThresholdObjective OBJECT
-    new_objective = newProblem.translate()  ## TODO test what new_objective returns
-    # print(new_objective[0].params)
+    ### GENERATE THE ThresholdObjective OBJECTS
+    new_objectives = newProblem.translate()  # it should return a list of ThresholdObjective objects
+    num_objectives = len(new_objectives)
+    # print(f"Threshold Objective: {new_objective.params}")
 
     ### CREATE THE OUTPUT DIRECTORY TO SAVE THE RESULTS IF NOT ALREADY EXISTS
     output_dir = "results/" + args.policy + "/" + args.problemType + "/" + args.input.split("/")[-1] + "/k_" \
@@ -98,21 +101,33 @@ if __name__ == "__main__":
     frac_output = output_dir + 'fractional'
     int_output = output_dir + 'integral'
 
+    if args.traceType == 'sequential':
+        if num_objectives < T:
+            trace = list(range(num_objectives)) * math.ceil((1.0*T) / num_objectives)
+        else:
+            trace = list(range(num_objectives))
+        trace = trace[:T]
+    elif args.traceType == 'random':
+        trace = random.sample(range(T), T)
+    elif args.traceType == 'custom':
+        trace = load(args.trace)
+    print(f"trace is: {trace}")
+
     # GENERATE THE OCOPolicy OBJECT
     if args.policy == 'OGD':
-        newPolicy = OCOPolicy(new_decision_set, eta, new_objective[0])
+        newPolicy = OCOPolicy(new_decision_set, new_objectives[0], eta)
         logging.info("An Online Gradient Descent policy is generated.")
 
     elif args.policy == 'OGA':
-        newPolicy = OGA(new_decision_set, eta, new_objective)
+        newPolicy = OGA(new_decision_set, new_objectives[0], eta)
         logging.info("An OGA policy is generated.")
 
     elif args.policy == 'OMD':
-        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, eta, new_objective)
+        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta)
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
     elif args.policy == 'Optimistic':
-        newPolicy = OptimisticPolicy(new_decision_set, eta, new_objective)
+        newPolicy = OptimisticPolicy(new_decision_set, new_objectives[0], eta)
         logging.info("An Optimistic policy is generated.")
 
     elif args.policy == 'KKL':
@@ -148,7 +163,9 @@ if __name__ == "__main__":
         ## RUN THE OCOPolicy
         while newPolicy.current_iteration < args.T:
             # TODO design backups if the algorithm is interrupted
-            logging.info("Running iteration #{x}...\n".format(x=newPolicy.current_iteration))  ## TODO format string
+            i = newPolicy.current_iteration
+            logging.info(f"Running iteration #{i}...\n")  ## TODO format string
+            newPolicy.objective = new_objectives[trace[i]]
             newPolicy.step()
         logging.info("The algorithm is finished.")
 
@@ -159,8 +176,10 @@ if __name__ == "__main__":
         print(f"frac rewards: {final_frac_rewards}")
         print(f"int rewards: {final_int_rewards}")
 
+
         def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
-            return np.cumsum(rewards) / (np.arange(args.T) + 1)
+            return np.cumsum(rewards) / np.arange(1, args.T)
+
 
         cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
         cum_int_rewards = get_cum_avg_reward(final_int_rewards)

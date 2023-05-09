@@ -143,7 +143,6 @@ class Problem(object):
             sys.stderr.write('n: ' + str(n) + '\n')
             params['n'] = n
             wdnfs = self.wdnf_dict[graph]
-            # del wdnfs.coefficients[()]
             wdnfs.coefficients.pop((), None)
             sys.stderr.write('wdnfs: ' + str(wdnfs.coefficients) + '\n')
             C = len(wdnfs.coefficients)

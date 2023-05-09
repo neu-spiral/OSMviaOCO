@@ -37,14 +37,14 @@ class ThresholdObjective:
     def eval(self, x):
         x = np.array(x)
         obj = 0
-        for i in self.C:
+        for i in range(self.C):
             w = np.array(self.w[i])
             obj += self.c[i] * np.min([sum(x[self.S[i]] * w[self.S[i]]), self.b[i]])
         return obj  # Evaluate the function
 
     def supergradient(self, x):
         x = np.array(x)
-        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in self.C]
+        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in range(self.C)]
         return np.array(
             [np.sum([self.c[i] * self.w[i][k] * int(k in self.S[i] and is_not_saturated[i]) for i in self.C]) for k in
              range(x.size)])  # Evaluate supergradient
@@ -129,7 +129,9 @@ class OCOPolicy:
 
     def step(self):
         start = time()
-        frac_reward = self.objective.eval(self.decision)  # what is self.decision
+        print(f"Threshold Objective is {self.objective.params}")
+        print(f"decision is {self.decision}")
+        frac_reward = self.objective.eval(self.decision)
         self.decisions.append(self.decision)
         int_reward = self.objective.eval(self.round(self.decision))
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
