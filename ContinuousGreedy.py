@@ -510,5 +510,5 @@ class ContinuousGreedy:
                 track[t] = (time_passed, new_y)
             bases.append(mk)
             save(backup_file, [y, track, bases])
-            print("y after iteration %d is: " % t + str(y))
+            #print("y after iteration %d is: " % t + str(y))
         return y, track, bases

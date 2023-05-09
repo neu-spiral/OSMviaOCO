@@ -24,8 +24,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     eta = args.eta
-    T = args.T
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.ERROR)
 
     ### LOAD OR GENERATE THE PROBLEM INSTANCE
     # use here if the problem instance has already been created
@@ -159,7 +158,7 @@ if __name__ == "__main__":
         # initialize game
         game = Game(alg, mapping, ws, n, T)
 
-    if args.policy in ['OGD', 'OGA', 'OMD', 'Optimistic']:
+    if args.policy != 'KKL':
         ## RUN THE OCOPolicy
         while newPolicy.current_iteration < args.T:
             # TODO design backups if the algorithm is interrupted
@@ -179,7 +178,6 @@ if __name__ == "__main__":
 
         def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
             return np.cumsum(rewards) / np.arange(1, args.T)
-
 
         cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
         cum_int_rewards = get_cum_avg_reward(final_int_rewards)

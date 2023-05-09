@@ -17,7 +17,6 @@ class Game:
         self.n = n              # dimension of the decision/action
         self.mapping = mapping  # Phi(s)
 
-
         self.history = deque()
         self.reward_history = deque()
         self.action_history = deque()
@@ -61,6 +60,8 @@ class Game:
             action, feedback, w = self.next()
             self.reward_history.append(feedback)
             self.action_history.append(action)
+            print(f"iteration {t}")
+            print(f"cum avg reward {self.get_cum_avg_reward()}")
 
     def get_reward_history(self) -> np.ndarray:
         return np.array(self.reward_history)
@@ -69,4 +70,4 @@ class Game:
         return np.array(self.action_history)
 
     def get_cum_avg_reward(self) -> np.ndarray:
-        return np.cumsum(self.reward_history) / (np.arange(self.horizon) + 1)
+        return np.cumsum(self.reward_history) / (np.arange(len(self.reward_history)) + 1)
