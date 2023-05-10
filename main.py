@@ -24,6 +24,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     eta = args.eta
+    T = args.T
     logging.basicConfig(level=logging.ERROR)
 
     ### LOAD OR GENERATE THE PROBLEM INSTANCE
@@ -58,6 +59,7 @@ if __name__ == "__main__":
             print("IM problem")
             logging.info('Loading cascades...')
             graphs = load(args.input)  # this needs a list of graphs
+            assert len(graphs) == T, "Number of f_t's do not match T!"
             if args.partitions is not None:
                 target_partitions = load(args.partitions)
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
@@ -74,7 +76,7 @@ if __name__ == "__main__":
                 new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S)
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
-        # generate a file for problems if it does not already exists
+        # generate a file for problems if it does not already exist
         problem_dir = "problems/"
         if not os.path.exists(problem_dir):
             os.makedirs(problem_dir)
