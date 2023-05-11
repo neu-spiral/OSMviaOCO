@@ -17,7 +17,7 @@ class Translator:
 
         self.wdnfs = [wdnf_dict[t].coefficients for t in range(self.T)]
         for coeffs in self.wdnfs:  # add a constant term if not already present
-            coeffs[()] = 1
+            coeffs[()] = -1
 
         self.sign = wdnf_dict[0].sign
         self.translator(self.wdnfs)
@@ -56,7 +56,7 @@ class Translator:
         for key, val in wdnf.items():
             ind = set_to_index[key]
             w[ind] = val
-        return w
+        return -w
 
     def find_ws(self, wdnfs: List[dict], set_to_index: set):
         '''
