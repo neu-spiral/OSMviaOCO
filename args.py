@@ -13,9 +13,21 @@ def create_parser():
     parser.add_argument('--partitions', default=None,
                         help='Partitions file to generate constraints from')
     parser.add_argument('--policy', default='OGD', type=str, help='Type of the algorithm',
-                        choices=['OGD', 'BanditOGD', 'whatever'])  # policies?
+                        choices=['OGD', 'OGA', 'OMD', 'Optimistic', 'KKL'])  # policies
     parser.add_argument('--eta', default=0.1, type=float, help='eta of the policy')  # default eta?
     parser.add_argument('--k', default=1, type=int, help='cardinality k for each partition')
     parser.add_argument('--T', default=100, type=int,
                         help='Number of iterations used in the maximization algorithm')
+    parser.add_argument('--traceType', default='sequential', type=str, help='Construction type of the trace list',
+                        choices=['sequential', 'random', 'custom'])
+    parser.add_argument('--KKLalg', default='continuous-greedy', type=str,
+                        help='Type of offline approximation algorithm for KKL',
+                        choices=['continuous-greedy', 'greedy'])
+    parser.add_argument('--setting', default='full-information', help='Type of feedback to the online player',
+                        choices=['full-information', 'bandit'])
+
+    subparsers = parser.add_subparsers(dest='subcommand')
+    subparsers.required = False
+    parser_custom = subparsers.add_parser('custom')
+    parser_custom.add_argument('--trace', default=None, type=str, help='file that contains the trace of the policy')
     return parser

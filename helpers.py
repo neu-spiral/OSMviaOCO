@@ -8,19 +8,22 @@ import pickle
 
 
 def write(file, content):
-    f = open(file, 'wb')
-    f.write(str(content))
-    f.close()
+    if file:
+        f = open(file, 'wb')
+        f.write(str(content))
+        f.close()
 
 
 def load(source_file):
-    with open(source_file, "rb") as f:
-        return pickle.load(f)
+    if source_file:
+        with open(source_file, "rb") as f:
+            return pickle.load(f)
 
 
 def save(file, content):
-    with open(file, "wb") as f:
-        pickle.dump(content, f)
+    if file:
+        with open(file, "wb") as f:
+            pickle.dump(content, f)
 
 
 def projectToSimplex(d, cap):

@@ -1,13 +1,12 @@
+from helpers import partition_matroid_round, sample_spherical
+from itertools import product
+from time import time
 from typing import Type
-
 import numpy as np
 import cvxpy as cp
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import product
-
-from helpers import partition_matroid_round, sample_spherical
 
 
 class ThresholdObjective:
@@ -38,14 +37,14 @@ class ThresholdObjective:
     def eval(self, x):
         x = np.array(x)
         obj = 0
-        for i in self.C:
+        for i in range(self.C):
             w = np.array(self.w[i])
             obj += self.c[i] * np.min([sum(x[self.S[i]] * w[self.S[i]]), self.b[i]])
         return obj  # Evaluate the function
 
     def supergradient(self, x):
         x = np.array(x)
-        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in self.C]
+        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in range(self.C)]
         return np.array(
             [np.sum([self.c[i] * self.w[i][k] * int(k in self.S[i] and is_not_saturated[i]) for i in self.C]) for k in
              range(x.size)])  # Evaluate supergradient
@@ -98,15 +97,15 @@ class ZeroOneDecisionSet:
 
 
 class RelaxedPartitionMatroid(ZeroOneDecisionSet):
-    def __init__(self, n, cardinalities_k, sets_S, gamma, sigma):
+    def __init__(self, n, cardinalities_k, sets_S, gamma=0, sigma=0):
         super().__init__(n, gamma, sigma)
 
         self.sets_S = sets_S
         self.cardinalities_k = cardinalities_k
         self.setup_constraints([cp.sum(self.x[sets_S[i]]) == (cardinalities_k[i]) * (
                 1 - 2 * self.sigma * self.n) + self.sigma * len(sets_S[i]) for i in range(
-            len(cardinalities_k))])  # add additional consrain
-        # ts and inherit functionality from [0, 1] decision set
+            len(cardinalities_k))])  # add additional constraints
+        # and inherit functionality from [0, 1] decision set
 
 
 class OCOPolicy:
@@ -118,6 +117,7 @@ class OCOPolicy:
         self.int_rewards = []
         self.decision = np.zeros(decision_set.n)
         self.decisions = []
+        self.running_time = []
         self.current_iteration = 1
         if isinstance(decision_set, RelaxedPartitionMatroid):
             self.decision = np.zeros(decision_set.n)
@@ -128,12 +128,16 @@ class OCOPolicy:
             raise Exception('Not implemented')
 
     def step(self):
-        frac_reward = self.objective.eval(self.decision)  # what is self.decision
+        start = time()
+        print(f"Threshold Objective is {self.objective.params}")
+        print(f"decision is {self.decision}")
+        frac_reward = self.objective.eval(self.decision)
         self.decisions.append(self.decision)
         int_reward = self.objective.eval(self.round(self.decision))
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
         self.int_rewards.append(int_reward)  # Collect value of integral reward
         self.current_iteration += 1
+        self.running_time.append(time() - start)
 
     def round(self, x):
         if isinstance(self.decision_set, RelaxedPartitionMatroid):

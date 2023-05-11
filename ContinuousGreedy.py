@@ -504,11 +504,11 @@ class ContinuousGreedy:
                 for i in mk:
                     y[i] += gamma
                 # y = {i: y[i] + gamma for i in mk}
-            if keep_track or t == iterations - 1:
-                time_passed += time() - start
-                new_y = y.copy()
-                track[t] = (time_passed, new_y)
-            bases.append(mk)
-            save(backup_file, [y, track, bases])
-            print("y after iteration %d is: " % t + str(y))
-        return y, track, bases
+            # if keep_track or t == iterations - 1:
+            #     time_passed += time() - start
+            #     new_y = y.copy()
+            #     track[t] = (time_passed, new_y)
+            #bases.append(mk)
+            #save(backup_file, [y, track, bases])
+            #print("y after iteration %d is: " % t + str(y))
+        return y #track, bases
