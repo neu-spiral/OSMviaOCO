@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from ContinuousGreedy import UniformMatroidSolver, PartitionMatroidSolver, SamplerEstimator, PolynomialEstimator, \
-    ContinuousGreedy, StochasticGradientEstimator
+    ContinuousGreedy, StochasticGradientEstimator, generate_samples
 from networkx import Graph, DiGraph
 from networkx.algorithms import bipartite
 from oco_tools import ThresholdObjective
@@ -72,6 +72,15 @@ def find_derivatives(function_type, center, degree):
     return derivatives
 
 
+def wdnf_to_threshold(wdnf):
+    """
+    Given a WDNF object, returns a ThresholdObjective object.
+    :param wdnf:
+    :return:
+    """
+    pass
+
+
 class Problem(object):
     """Abstract class to parent classes of different problem instances.
     """
@@ -136,30 +145,62 @@ class Problem(object):
     def translate(self):
         """ takes self.wdnf_dict and returns the params of a ThresholdObjective
         """
+        n = self.problemSize
+        # sys.stderr.write('n: ' + str(n) + '\n')
         threshold_objectives = []
+        # C = range(len(self.wdnf_dict))
+        F = WDNF(dict(), -1)
         for graph in self.wdnf_dict:
             params = dict()
-            n = self.problemSize
-            sys.stderr.write('n: ' + str(n) + '\n')
             params['n'] = n
-            wdnfs = self.wdnf_dict[graph]
-            wdnfs.coefficients.pop((), None)
-            sys.stderr.write('wdnfs: ' + str(wdnfs.coefficients) + '\n')
-            C = len(wdnfs.coefficients)
-            sys.stderr.write('C: ' + str(C) + '\n')
+            wdnfs = self.wdnf_dict[graph].coefficients.copy()
+            wdnfs.pop((), None)
+            # sys.stderr.write('wdnfs: ' + str(wdnfs) + '\n')
+            C = range(len(wdnfs))
+            # sys.stderr.write('C: ' + str(C) + '\n')
             params['C'] = C
-            sys.stderr.write('b: ' + str(np.ones(C)) + '\n')
-            params['b'] = np.ones(C)
-            sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
-            params['w'] = np.ones((C, n))
-            print(list(self.wdnf_dict.keys()))
-            sys.stderr.write('S: ' + str(list(wdnfs.coefficients.keys())) + '\n')
-            params['S'] = [list(key) for key in list(wdnfs.coefficients.keys())]
-            sys.stderr.write('c: ' + str(list(wdnfs.coefficients.values())) + '\n')
-            params['c'] = [-1 * value for value in list(wdnfs.coefficients.values())]
-            # extensive tests will be added
+            # sys.stderr.write('b: ' + str(np.ones(len(C))) + '\n')
+            params['b'] = np.ones(len(C))
+            # sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
+            params['w'] = np.ones((len(C), n))
+            # print(list(self.wdnf_dict.keys()))
+            # sys.stderr.write('S: ' + str(list(wdnfs.keys())) + '\n')
+            params['S'] = [list(key) for key in list(wdnfs.keys())]
+            # sys.stderr.write('c: ' + str(list(wdnfs.values())) + '\n')
+            params['c'] = [-1 * value for value in list(wdnfs.values())]
+            # extensive tests
+            # y = dict.fromkeys(self.groundSet, 0.0)
+            # for _ in range(100):
+            #     x = dict(zip(y.keys(), np.random.randint(2, size=len(y)).tolist()))
+            #     x1 = np.array(list(x.values()))
+            #     print(f"x is {x} and wdnf(x) is {self.wdnf_dict[graph](x)} while ThresholdObjective(x) is "
+            #           f"{ThresholdObjective(params).eval(x1)}")
+            #     assert math.isclose(self.wdnf_dict[graph](x), ThresholdObjective(params).eval(x1), rel_tol=1e-5), \
+            #         f"TRANSLATION IS INCORRECT!"
+            F += (1.0 / self.instancesSize) * self.wdnf_dict[graph]
             threshold_objectives.append(ThresholdObjective(params))
-        return threshold_objectives
+        F_params = dict()
+        # print(f"F is {F.coefficients}")
+        F_wdnf = F.coefficients.copy()
+        F_wdnf.pop((), None)
+        F_params['n'] = n
+        C = range(len(F_wdnf))
+        F_params['C'] = C
+        F_params['b'] = np.ones(len(C))
+        F_params['w'] = np.ones((len(C), n))
+        F_params['S'] = [list(key) for key in list(F_wdnf.keys())]
+        F_params['c'] = [-1 * value for value in list(F_wdnf.values())]
+        # print(f"F_params: {F_params}")
+        # y = dict.fromkeys(self.groundSet, 0.0)
+        # for _ in range(100):
+        #     x = dict(zip(y.keys(), np.random.randint(2, size=len(y)).tolist()))
+        #     x1 = np.array(list(x.values()))
+        #     print(f"x is {x} and wdnf(x) is {F(x)} while ThresholdObjective(x) is "
+        #           f"{ThresholdObjective(F_params).eval(x1)}")
+        #     assert math.isclose(F(x), ThresholdObjective(F_params).eval(x1), rel_tol=1e-5), \
+        #         f"TRANSLATION IS INCORRECT!"
+        F = ThresholdObjective(F_params)
+        return threshold_objectives, F
 
 
 class InfluenceMaximization(Problem):

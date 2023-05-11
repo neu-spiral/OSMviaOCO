@@ -45,7 +45,7 @@ if __name__ == "__main__":
                 files[root] = [f]
 
     if args.type == 'TIMEvsREWARDS':
-        root = 'results/OGD/IM/ZKC_10_01/k_3_100_iter/'
+        root = 'results/OGA/IM/ZKC_100_01/k_2_100_iter_10p0_eta/'
         # 'results/OGD/IM/RB1powerlaw_10_10_21/k_1_100_iter/'
         frac_file = 'fractional'
         int_file = 'integral'
@@ -57,6 +57,7 @@ if __name__ == "__main__":
                  label='fractional', linestyle='dashed')
         plt.plot(range(len(int_results[0])), int_results[0], marker='^', markersize=marker_size,
                  label='integral', linestyle='dotted')
+        plt.axhline(y=frac_results[2], color='r', linestyle='-')
 
         plt.ylabel("rewards")
         ax = plt.gca()

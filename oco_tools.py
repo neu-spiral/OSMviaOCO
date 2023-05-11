@@ -1,3 +1,4 @@
+from abc import ABC, ABCMeta, abstractmethod
 from helpers import partition_matroid_round, sample_spherical
 from itertools import product
 from time import time
@@ -14,7 +15,7 @@ class ThresholdObjective:
         """Params format:
         params = { The naming corresponds to the one used in the paper
             'n': n, # dimension size - n, |V|
-            'C': C, # Number of threshold functions - # of wdnfs
+            'C': C, # range list of threshold functions - # of wdnfs C should be a list
             'b': b, # Vector of thresholds - |1|_C
             'w': w, # List of vectors (variable size) w[i][j] is the weight of the x[j] within threshold function i -|1|
             a Cxn matrix
@@ -37,14 +38,14 @@ class ThresholdObjective:
     def eval(self, x):
         x = np.array(x)
         obj = 0
-        for i in range(self.C):
+        for i in self.C:
             w = np.array(self.w[i])
             obj += self.c[i] * np.min([sum(x[self.S[i]] * w[self.S[i]]), self.b[i]])
         return obj  # Evaluate the function
 
     def supergradient(self, x):
         x = np.array(x)
-        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in range(self.C)]
+        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in self.C]
         return np.array(
             [np.sum([self.c[i] * self.w[i][k] * int(k in self.S[i] and is_not_saturated[i]) for i in self.C]) for k in
              range(x.size)])  # Evaluate supergradient
@@ -102,13 +103,14 @@ class RelaxedPartitionMatroid(ZeroOneDecisionSet):
 
         self.sets_S = sets_S
         self.cardinalities_k = cardinalities_k
-        self.setup_constraints([cp.sum(self.x[sets_S[i]]) <= (cardinalities_k[i]) * (
+        self.setup_constraints([cp.sum(self.x[sets_S[i]]) == (cardinalities_k[i]) * (
                 1 - 2 * self.sigma * self.n) + self.sigma * len(sets_S[i]) for i in range(
             len(cardinalities_k))])  # add additional constraints
         # and inherit functionality from [0, 1] decision set
 
 
-class OCOPolicy:
+class OCOPolicy(ABC):
+    @abstractmethod
     def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float):
         self.eta = eta
         self.objective = objective  # Requires objective

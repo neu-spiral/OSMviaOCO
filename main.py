@@ -86,13 +86,13 @@ if __name__ == "__main__":
              newProblem)
 
     ### GENERATE THE ThresholdObjective OBJECTS
-    new_objectives = newProblem.translate()  # it should return a list of ThresholdObjective objects
+    new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
     num_objectives = len(new_objectives)
     # print(f"Threshold Objective: {new_objective.params}")
 
     ### CREATE THE OUTPUT DIRECTORY TO SAVE THE RESULTS IF NOT ALREADY EXISTS
-    output_dir = "results/" + args.policy + "/" + args.problemType + "/" + args.input.split("/")[-1] + "/k_" \
-                 + str(args.k) + "_" + str(args.T) + "_iter" + "/"
+    output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/k_{args.k}_{args.T}_iter_" \
+                 f"{str(eta).replace('.', 'p')}_eta/"
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -115,11 +115,7 @@ if __name__ == "__main__":
     print(f"trace is: {trace}")
 
     # GENERATE THE OCOPolicy OBJECT
-    if args.policy == 'OGD':
-        newPolicy = OCOPolicy(new_decision_set, new_objectives[0], eta)
-        logging.info("An Online Gradient Descent policy is generated.")
-
-    elif args.policy == 'OGA':
+    if args.policy == 'OGA':
         newPolicy = OGA(new_decision_set, new_objectives[0], eta)
         logging.info("An OGA policy is generated.")
 
@@ -170,6 +166,12 @@ if __name__ == "__main__":
             newPolicy.step()
         logging.info("The algorithm is finished.")
 
+        newPolicy.objective = F
+        newPolicy.step()
+
+        opt_frac_reward = newPolicy.frac_rewards.pop()
+        opt_int_reward = newPolicy.int_rewards.pop()
+
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards
         final_int_rewards = newPolicy.int_rewards
@@ -186,8 +188,8 @@ if __name__ == "__main__":
         print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
         print(f"cumulative averaged integral rewards: {cum_int_rewards}")
 
-        save(frac_output, [cum_frac_rewards, running_time])
-        save(int_output, [cum_int_rewards, running_time])
+        save(frac_output, [cum_frac_rewards, running_time, opt_frac_reward])
+        save(int_output, [cum_int_rewards, running_time, opt_int_reward])
         logging.info("The rewards are saved to: " + output_dir + ".")
 
     if args.policy == 'KKL':
