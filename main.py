@@ -3,8 +3,8 @@ from ProblemInstances import InfluenceMaximization, FacilityLocation
 from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OCOPolicy, OGA, \
     ShiftedNegativeEntropyOMD, OptimisticPolicy
 from KKL.translate import Translator
-from KKL.mapping import WDNFMapping
-from KKL.offline_alg import ApproxGreedy
+from KKL.mapping import WDNFMapping, IdentityMapping
+from KKL.offline_alg import ApproxGreedy, ApproxAlgInterval
 from KKL.online_alg import KKL
 from KKL.game import Game
 
@@ -17,6 +17,8 @@ import os
 import pickle
 import random
 import sys
+
+import networkx as nx
 
 if __name__ == "__main__":
 
@@ -59,7 +61,9 @@ if __name__ == "__main__":
             print("IM problem")
             logging.info('Loading cascades...')
             graphs = load(args.input)  # this needs a list of graphs
+
             assert len(graphs) == T, "Number of f_t's do not match T!"
+
             if args.partitions is not None:
                 target_partitions = load(args.partitions)
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
@@ -102,17 +106,18 @@ if __name__ == "__main__":
     frac_output = output_dir + 'fractional'
     int_output = output_dir + 'integral'
 
-    if args.traceType == 'sequential':
-        if num_objectives < T:
-            trace = list(range(num_objectives)) * math.ceil((1.0*T) / num_objectives)
-        else:
-            trace = list(range(num_objectives))
-        trace = trace[:T]
-    elif args.traceType == 'random':
-        trace = random.sample(range(T), T)
-    elif args.traceType == 'custom':
-        trace = load(args.trace)
-    print(f"trace is: {trace}")
+    
+    # if args.traceType == 'sequential':
+    #     if num_objectives < T:
+    #         trace = list(range(num_objectives)) * math.ceil((1.0*T) / num_objectives)
+    #     else:
+    #         trace = list(range(num_objectives))
+    #     trace = trace[:T]
+    # elif args.traceType == 'random':
+    #     trace = random.sample(range(T), T)
+    # elif args.traceType == 'custom':
+    #     trace = load(args.trace)
+    # print(f"trace is: {trace}")
 
     # GENERATE THE OCOPolicy OBJECT
     if args.policy == 'OGD':
@@ -145,15 +150,27 @@ if __name__ == "__main__":
         mapping = WDNFMapping(n, index_to_set, sign)
         linear_solver = newProblem.get_solver()
         initial_point = newProblem.get_initial_point()
-        approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n)
-
+        approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n, args.KKLalg, args.setting)
+        
+        for w in ws:
+            assert np.all(w >= 0), "w not positive"        
+          
         # set constants
-        W = max([np.linalg.norm(w) for w in ws])  # ||w|| <= W
+        W = np.sqrt(m)  # ||w|| <= W
         R = np.sqrt(m)  # ||Phi(s)|| <= R
-        alpha = math.e
-        delta = (alpha + 1) * R ** 2 / T
-        eta = (alpha + 1) * R / (W * np.sqrt(T))
+        alpha = 1 - 1 / math.e
+        delta = ((alpha + 1) * R**2) / T
+        eta = ((alpha + 1) * R) / (W * np.sqrt(T))
 
+        print(f" ===== KKL parameters  ====== ")
+        print(f"alpha (approx ratio) = {alpha}")
+        print(f"eta = {eta}")
+        print(f"delta = {delta}")
+        print(f"W = {W}")
+        print(f"R = {R}")
+        print(f"lambda = {delta / (4 * (alpha + 2)**2 * R**2)}")
+        print(f"KKL a-regret <= {(alpha + 1) * R * W / np.sqrt(T)}")
+        
         # initialize online algorithm
         alg = KKL(approx_alg, mapping, alpha, delta, eta, R, n)
 

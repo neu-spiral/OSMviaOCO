@@ -20,6 +20,12 @@ def create_parser():
                         help='Number of iterations used in the maximization algorithm')
     parser.add_argument('--traceType', default='sequential', type=str, help='Construction type of the trace list',
                         choices=['sequential', 'random', 'custom'])
+    parser.add_argument('--KKLalg', default='continuous-greedy', type=str,
+                        help='Type of offline approximation algorithm for KKL',
+                        choices=['continuous-greedy', 'greedy'])
+    parser.add_argument('--setting', default='full-information', help='Type of feedback to the online player',
+                        choices=['full-information', 'bandit'])
+
     subparsers = parser.add_subparsers(dest='subcommand')
     subparsers.required = False
     parser_custom = subparsers.add_parser('custom')

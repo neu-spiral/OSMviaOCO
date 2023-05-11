@@ -21,7 +21,8 @@ class WDNFMapping(Mapping):
         for i in range(self.m):
             set = self.index_to_set[i] # returns a tuple
             if self.sign == -1:
-                phi[i] = np.prod([1 - s[j] for j in set])
+                phi[i] = 1 if set == () else -np.prod([1 - s[j] for j in set])
             else:
+                print("(Mapping, Phi): sign is -1")
                 phi[i] = np.prod([s[j] for j in set])
         return phi
