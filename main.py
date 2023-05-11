@@ -106,7 +106,7 @@ if __name__ == "__main__":
     frac_output = output_dir + 'fractional'
     int_output = output_dir + 'integral'
 
-    
+
     # if args.traceType == 'sequential':
     #     if num_objectives < T:
     #         trace = list(range(num_objectives)) * math.ceil((1.0*T) / num_objectives)
@@ -147,10 +147,10 @@ if __name__ == "__main__":
         linear_solver = newProblem.get_solver()
         initial_point = newProblem.get_initial_point()
         approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n, args.KKLalg, args.setting)
-        
+
         for w in ws:
-            assert np.all(w >= 0), "w not positive"        
-          
+            assert np.all(w >= 0), "w not positive"
+
         # set constants
         W = np.sqrt(m)  # ||w|| <= W
         R = np.sqrt(m)  # ||Phi(s)|| <= R
@@ -166,7 +166,7 @@ if __name__ == "__main__":
         print(f"R = {R}")
         print(f"lambda = {delta / (4 * (alpha + 2)**2 * R**2)}")
         print(f"KKL a-regret <= {(alpha + 1) * R * W / np.sqrt(T)}")
-        
+
         # initialize online algorithm
         alg = KKL(approx_alg, mapping, alpha, delta, eta, R, n)
 
