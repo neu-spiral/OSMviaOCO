@@ -95,17 +95,15 @@ if __name__ == "__main__":
     # print(f"Threshold Objective: {new_objective.params}")
 
     ### CREATE THE OUTPUT DIRECTORY TO SAVE THE RESULTS IF NOT ALREADY EXISTS
-    output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/k_{args.k}_{args.T}_iter_" \
-                 f"{str(eta).replace('.', 'p')}_eta/"
+    output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/k_{args.k}_{args.T}_iter/"
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         logging.info('...output directory is created...')
     sys.stderr.write('output directory is:' + output_dir)
 
-    frac_output = output_dir + 'fractional'
-    int_output = output_dir + 'integral'
-
+    output = output_dir + f"eta_{str(eta).replace('.', 'p')}"
+    # int_output = output_dir + f"eta_{str(eta).replace('.', 'p')}_integral"
 
     # if args.traceType == 'sequential':
     #     if num_objectives < T:
@@ -179,7 +177,7 @@ if __name__ == "__main__":
             # TODO design backups if the algorithm is interrupted
             i = newPolicy.current_iteration
             logging.info(f"Running iteration #{i}...\n")  ## TODO format string
-            newPolicy.objective = new_objectives[trace[i]]
+            newPolicy.objective = new_objectives[i]
             newPolicy.step()
         logging.info("The algorithm is finished.")
 
@@ -205,8 +203,10 @@ if __name__ == "__main__":
         print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
         print(f"cumulative averaged integral rewards: {cum_int_rewards}")
 
-        save(frac_output, [cum_frac_rewards, running_time, opt_frac_reward])
-        save(int_output, [cum_int_rewards, running_time, opt_int_reward])
+        save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
+                      'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
+                      'opt_int_reward': opt_int_reward})
+        # save(int_output, [cum_int_rewards, running_time, opt_int_reward])
         logging.info("The rewards are saved to: " + output_dir + ".")
 
     if args.policy == 'KKL':
