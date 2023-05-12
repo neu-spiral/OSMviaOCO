@@ -229,7 +229,7 @@ class InfluenceMaximization(Problem):
         wdnf_lengths = []
         for i in range(self.instancesSize):
             paths = nx.algorithms.dag.transitive_closure(graphs[i])
-            sys.stderr.write("paths of cascade " + str(i) + " are:" + str(graphs[i].edges()) + '\n')
+            # sys.stderr.write("paths of cascade " + str(i) + " are:" + str(graphs[i].edges()) + '\n')
             wdnf_list = [WDNF({tuple(sorted([node] + list(paths.predecessors(node)))): -1.0 / self.problemSize}, -1)
                          for node in self.groundSet]
             p_v = [len(key) for wdnf in wdnf_list for key in wdnf.coefficients]
@@ -240,17 +240,18 @@ class InfluenceMaximization(Problem):
             logging.info("\nAverage P_v size is %s, maximum P_v size is %d, minimum P_v size is %d, and standard "
                          "deviation of P_v's is %s" % (avg_p_v, max_p_v, min_p_v, std_dev_p_v))
             resulting_wdnf = sum(wdnf_list) + WDNF({(): 1.0}, -1)
-            sys.stderr.write("wdnf is " + str(resulting_wdnf.coefficients) + '\n')
+            # sys.stderr.write("wdnf is " + str(resulting_wdnf.coefficients) + '\n')
             wdnf_lengths.append(len(resulting_wdnf.coefficients))
             dependencies.update(resulting_wdnf.find_dependencies())
             wdnf_dict[i] = resulting_wdnf  # prod(1 - x_u) for all u in P_v
+            logging.info(f"Cascade {str(i)} WDNFs are generated.\n")
         self.avg_wdnf_len = (sum(wdnf_lengths) * 1.0) / len(wdnf_lengths)
         self.max_wdnf_len = max(wdnf_lengths)
         logging.info('\nAverage WDNF size is %d and maximum WDNF size is %d.' % (self.avg_wdnf_len, self.max_wdnf_len))
         self.wdnf_dict = wdnf_dict
         self.utility_function = np.log1p
         self.dependencies = dependencies
-        sys.stderr.write("wdnf_dict is " + str(wdnf_dict) + '\n')
+        # sys.stderr.write("wdnf_dict is " + str(wdnf_dict) + '\n')
         logging.info('... done. An instance of a influence maximization problem has been created.')
 
     def get_solver(self):
@@ -336,12 +337,19 @@ class FacilityLocation(Problem):
         """
         super(FacilityLocation, self).__init__()
         X = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}  # facilities, movies
-        self.X = map(int, X)  # facilities, movies
+        self.X = set(map(int, X))  # facilities, movies
+        print(f"movies are: {X}")
         self.Y = set(bipartite_graph) - X  # customers, users
+        print(f"users are: {self.Y}")
         self.constraints = constraints
+        print(f"constraints are: {constraints}")
         # self.partitioned_set = dict.fromkeys(self.Y, self.X)  # ???
         self.target_partitions = target_partitions
-        self.problemSize = len(self.Y)  # number of customers, users
+        print(f"target partitions are: {target_partitions}")
+        self.problemSize = len(self.X)  # number of facilities, movies
+        print(f"# movies is: {self.problemSize}")
+        self.instancesSize = len(self.Y)  # number of customers, users
+        print(f"# users is: {self.instancesSize}")
         wdnf_dict = dict()
         dependencies = dict()
         wdnf_lengths = []
@@ -349,16 +357,16 @@ class FacilityLocation(Problem):
             weights = dict()
             # weights = {facility: bipartite_graph.get_edge_data(facility, y)['weight'] for facility in self.X}
             for facility in self.X:
-                try:
-                    weights[facility] = bipartite_graph.get_edge_data(str(facility), y)['weight']
-                except TypeError:
-                    weights[facility] = 0.0
+                weights[facility] = bipartite_graph.get_edge_data(facility, y)['weight'] \
+                    if bipartite_graph.has_edge(facility, y) else 0.0
             weights[len(list(self.X)) + 1] = 0.0
+            print(f"ratings of user {y} are: {weights}")
             descending_weights = sorted(weights.values(), reverse=True)
+            print(f"sorted ratings of user {y} are: {descending_weights}")
             indices = sorted(range(len(weights.values())), key=lambda k: list(weights.values())[k], reverse=True)
             wdnf_so_far = WDNF(dict(), -1)
             for i in range(len(list(self.X))):
-                index = tuple(int(weights.keys()[index]) for index in indices[:(i + 1)])
+                index = tuple(int(list(weights.keys())[index]) for index in indices[:(i + 1)])
                 wdnf_so_far += (descending_weights[i] - descending_weights[i + 1]) * \
                                (WDNF({(): 1.0}, -1) + (-1.0) * WDNF({index: 1.0}, -1))
                 if descending_weights[i + 1] == 0:

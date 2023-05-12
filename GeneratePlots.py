@@ -46,17 +46,21 @@ if __name__ == "__main__":
     if args.type == 'ITERvsREWARDS':
         for root in files:
             frac_opts = []
-            jet = plt.get_cmap('tab20b')
+            jet = plt.get_cmap('tab10')
             colors = iter(jet(np.linspace(0, 1, 10)))
             for f in files[root]:
                 result = load(os.path.join(root, f))
                 eta = eval(f.split('_')[-1].replace('p', '.'))
                 my_color = next(colors)
                 frac_opts.append(result['opt_frac_reward'])
-                plt.plot(range(len(result['cum_frac_rewards'])), result['cum_frac_rewards'], marker='o',
-                         markersize=marker_size, label=f"eta={eta}, fractional", linestyle='dashed', color=my_color)
-                plt.plot(range(len(result['cum_int_rewards'])), result['cum_int_rewards'], marker='^',
-                         markersize=marker_size, label=f"eta={eta}, integral", linestyle='dotted', color=my_color)
+                plt.plot(range(len(result['cum_frac_rewards'])), result['cum_frac_rewards'],
+                         label=f"eta={eta}, fractional", linestyle='dashed', color=my_color)
+                plt.plot(range(len(result['cum_int_rewards'])), result['cum_int_rewards'],
+                         label=f"eta={eta}, integral", linestyle='solid', color=my_color)
+                # plt.plot(range(len(result['cum_frac_rewards'])), result['cum_frac_rewards'], marker='o',
+                #          markersize=marker_size, label=f"eta={eta}, fractional", linestyle='dashed', color=my_color)
+                # plt.plot(range(len(result['cum_int_rewards'])), result['cum_int_rewards'], marker='^',
+                #          markersize=marker_size, label=f"eta={eta}, integral", linestyle='dotted', color=my_color)
 
             plt.axhline(y=max(frac_opts), color='r', linestyle='-')
             plt.ylabel("rewards")

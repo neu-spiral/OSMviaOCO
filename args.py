@@ -12,7 +12,7 @@ def create_parser():
                         help='Input file to generate problem instances from')
     parser.add_argument('--partitions', default=None,
                         help='Partitions file to generate constraints from')
-    parser.add_argument('--policy', default='OGD', type=str, help='Type of the algorithm',
+    parser.add_argument('--policy', default='OGA', type=str, help='Type of the algorithm',
                         choices=['OGA', 'OMD', 'Optimistic', 'KKL'])  # policies
     parser.add_argument('--eta', default=0.1, type=float, help='eta of the policy')  # default eta?
     parser.add_argument('--k', default=1, type=int, help='cardinality k for each partition')

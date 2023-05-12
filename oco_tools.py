@@ -39,6 +39,8 @@ class ThresholdObjective:
         x = np.array(x)
         obj = 0
         for i in self.C:
+            print(self.S[i])
+            print(f"x is {x}")
             w = np.array(self.w[i])
             obj += self.c[i] * np.min([sum(x[self.S[i]] * w[self.S[i]]), self.b[i]])
         return obj  # Evaluate the function
@@ -131,8 +133,8 @@ class OCOPolicy(ABC):
 
     def step(self):
         start = time()
-        print(f"Threshold Objective is {self.objective.params}")
-        print(f"decision is {self.decision}")
+        # print(f"Threshold Objective is {self.objective.params}")
+        # print(f"decision is {self.decision}")
         frac_reward = self.objective.eval(self.decision)
         self.decisions.append(self.decision)
         int_reward = self.objective.eval(self.round(self.decision))
