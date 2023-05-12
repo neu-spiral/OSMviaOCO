@@ -115,7 +115,9 @@ def simplify(a, b):
         c = np.random.choice([0, 1], p=[a / (a + b), b / (a + b)])
         return [a + b, 0] if c == 0 else [0, a + b]
     elif 1 - 1e-7 < a + b < 2 + 1e-7:
-        c = np.random.choice([0, 1], p=[(1 - b) / (2 - a - b), (1 - a) / (2 - a - b)])
+        ps = [(1 - b) / (2 - a - b), (1 - a) / (2 - a - b)]
+        ps = np.array(ps)/ sum(ps)
+        c = np.random.choice([0, 1], p=ps)
         return [1, a + b - 1] if c == 0 else [a + b - 1, 1]
 
 
@@ -140,3 +142,5 @@ def sample_spherical(ndim=3):
     vec = np.random.randn(ndim)
     vec /= np.linalg.norm(vec, axis=0)
     return vec
+def taverage(r):
+    return np.cumsum(r) / np.arange(1, len(r)+1)
