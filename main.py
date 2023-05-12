@@ -125,7 +125,7 @@ if __name__ == "__main__":
         logging.info("An OGA policy is generated.")
 
     elif args.policy == 'OMD':
-        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta)
+        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta, gamma=0.0)
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
     elif args.policy == 'Optimistic':
@@ -183,15 +183,16 @@ if __name__ == "__main__":
             newPolicy.step()
         logging.info("The algorithm is finished.")
 
-        newPolicy.objective = F
-        newPolicy.step()
+        newPolicy.objective = F  # new policy
+        for _ in range(100):
+            newPolicy.step()
 
         opt_frac_reward = newPolicy.frac_rewards.pop()
         opt_int_reward = newPolicy.int_rewards.pop()
 
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards
-        final_int_rewards = newPolicy.int_rewards
+        final_int_rewards = newPolicy.int_rewards  # edit these
         running_time = newPolicy.running_time
         print(f"frac rewards: {final_frac_rewards}")
         print(f"int rewards: {final_int_rewards}")

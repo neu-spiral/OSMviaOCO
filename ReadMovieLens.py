@@ -92,9 +92,6 @@ if __name__ == "__main__":
     numOfEdges = B.number_of_edges()
     logging.info('\nCreated a graph with %d nodes and %d edges' % (numOfNodes, numOfEdges))
 
-    # save(f"datasets/MovieLens_{len(users)}_users_{len(movies)}_movies", B)
-    # save(f"datasets/MovieLens_{len(users)}_users_{len(movies)}_movies_partitions", target_partitions)
-
     with open(f"datasets/MovieLens_{len(users)}_users_{len(movies)}_movies", "wb") as f:
         pickle.dump(B, f)
 
