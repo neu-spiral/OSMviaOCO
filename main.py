@@ -26,6 +26,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     eta = args.eta
+    seed = args.seed
     T = args.T
     logging.basicConfig(level=logging.INFO)
 
@@ -104,7 +105,7 @@ if __name__ == "__main__":
         logging.info('...output directory is created...')
     sys.stderr.write('output directory is:' + output_dir)
 
-    output = output_dir + f"eta_{str(eta).replace('.', 'p')}"
+    output = output_dir + f"eta_{str(eta).replace('.', 'p')}_seed_{seed}"
     # int_output = output_dir + f"eta_{str(eta).replace('.', 'p')}_integral"
 
     # if args.traceType == 'sequential':
@@ -175,6 +176,7 @@ if __name__ == "__main__":
 
     if args.policy != 'KKL':
         ## RUN THE OCOPolicy
+        np.random.seed(seed)
         while newPolicy.current_iteration < args.T:
             # TODO design backups if the algorithm is interrupted
             i = newPolicy.current_iteration
@@ -184,8 +186,8 @@ if __name__ == "__main__":
         logging.info("The algorithm is finished.")
 
         newPolicy.objective = F  # new policy
-        for _ in range(100):
-            newPolicy.step()
+        # for _ in range(100):
+        newPolicy.step()
 
         opt_frac_reward = newPolicy.frac_rewards.pop()
         opt_int_reward = newPolicy.int_rewards.pop()

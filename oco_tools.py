@@ -147,6 +147,7 @@ class OCOPolicy:
         else:
             raise Exception(f'Rounding procedure for {type(self.decision_set)} is not implemented.')
 
+
 class OGA(OCOPolicy):
     def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float, bandit=False):
         super().__init__(decision_set, objective, eta)
@@ -158,6 +159,7 @@ class OGA(OCOPolicy):
         super().step()
         if self.bandit:
             u = sample_spherical(self.decision_set.n)
+            print(f"sample_spherical returns {u}")
             self.supergradient = u * self.objective.eval(self.decision + self.decision_set.sigma * u)
         else:
             self.supergradient = self.objective.supergradient(self.decision)  # Compute supergradient
@@ -305,7 +307,8 @@ class FSF(OCOPolicy):
 
 
 class OnlineTBG(OCOPolicy):
-    def __init__(self,decision_set:ZeroOneDecisionSet,  objective: ThresholdObjective, n: int, eta: float, n_slots: int, items: list, n_colors: int):
+    def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, n: int, eta: float,
+                 n_slots: int, items: list, n_colors: int):
         super().__init__(decision_set, objective, eta)
         # self.experts = {}
         self.experts = {}
@@ -330,17 +333,17 @@ class OnlineTBG(OCOPolicy):
             c_vec[c] = np.random.choice(np.arange(self.n_colors))
         G, G_vec = self.sample(global_action, c_vec)
 
-        self.decision =np.copy(G_vec)
+        self.decision = np.copy(G_vec)
         super().step()
         for slot in range(self.n_slots):
             for c in range(self.n_colors):
                 Gp = {}
                 for slotp in range(self.n_slots):
                     for cp in range(c):
-                        Gp[(slotp, cp)] =  global_action[(slotp, cp)]
+                        Gp[(slotp, cp)] = global_action[(slotp, cp)]
                 for slotp in range(slot):
                     Gp[(slotp, c)] = global_action[(slotp, c)]
-                sampled_Gp,sampled_Gp_vec =self.sample(Gp, c_vec)
+                sampled_Gp, sampled_Gp_vec = self.sample(Gp, c_vec)
                 feedback = np.zeros(len(self.items[slot]))
                 for item in range(len(self.items[slot])):
                     A = np.copy(sampled_Gp_vec)
@@ -418,8 +421,9 @@ if __name__ == "__main__":
                                         'b': b,
                                         'C': C})
         objectives.append(objective)
-    constraints = RelaxedPartitionMatroid(n, cardinalities_k=[n//4], sets_S=[list(range(n))])
-    policy = OnlineTBG(decision_set=constraints,objective=objectives[0],n = n, eta=.01, n_colors=20, n_slots=5, items=[list(range(n))] * 5)
+    constraints = RelaxedPartitionMatroid(n, cardinalities_k=[n // 4], sets_S=[list(range(n))])
+    policy = OnlineTBG(decision_set=constraints, objective=objectives[0], n=n, eta=.01, n_colors=20, n_slots=5,
+                       items=[list(range(n))] * 5)
     T = 100
     for t in range(T):
         policy.step()

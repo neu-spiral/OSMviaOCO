@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     percent = 1
     # list of seeds with len = numOfCascades
-
+    np.random.seed(42)
     logging.basicConfig(level=logging.INFO)
     logging.info('Reading graph...')
     G = read_edgelist("datasets/soc-Epinions1.txt", comments='#', create_using=DiGraph(), nodetype=int)

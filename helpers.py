@@ -116,7 +116,7 @@ def simplify(a, b):
         return [a + b, 0] if c == 0 else [0, a + b]
     elif 1 - 1e-7 < a + b < 2 + 1e-7:
         ps = [(1 - b) / (2 - a - b), (1 - a) / (2 - a - b)]
-        ps = np.array(ps)/ sum(ps)
+        ps = np.array(ps) / sum(ps)
         c = np.random.choice([0, 1], p=ps)
         return [1, a + b - 1] if c == 0 else [a + b - 1, 1]
 
@@ -141,9 +141,13 @@ def partition_matroid_round(x, sets_S):
     for S in sets_S:
         x[S] = depround(x[S])
     return x
+
+
 def sample_spherical(ndim=3):
     vec = np.random.randn(ndim)
     vec /= np.linalg.norm(vec, axis=0)
     return vec
+
+
 def taverage(r):
-    return np.cumsum(r) / np.arange(1, len(r)+1)
+    return np.cumsum(r) / np.arange(1, len(r) + 1)

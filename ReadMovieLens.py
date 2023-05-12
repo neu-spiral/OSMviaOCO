@@ -11,7 +11,7 @@ if __name__ == "__main__":
     file_path = 'datasets/ml-datasets/ml-10M100K/ratings.dat'
     partition_path = 'datasets/ml-datasets/ml-10M100K/movies.dat'
     n = 3000  # subgraph size
-
+    np.random.seed(42)
     logging.basicConfig(level=logging.INFO)
     logging.info('Reading ratings...')
     with open(file_path, 'r') as f:
