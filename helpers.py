@@ -125,7 +125,10 @@ def depround(x):
     while (True):
         not_rounded = np.where(np.logical_and(x < 1, x > 0))[0]
         if len(not_rounded) == 1:
-            x[not_rounded[0]] = np.random.choice([0,1], p = [1-x[not_rounded[0]], x[not_rounded[0]]])
+            if x[not_rounded[0]] > 0.99:
+                x[not_rounded[0]] = 1
+            elif x[not_rounded[0]] < 0.01:
+                x[not_rounded[0]] = 0
             break
         elif len(not_rounded) == 0:
             break

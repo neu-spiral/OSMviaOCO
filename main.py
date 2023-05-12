@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     eta = args.eta
     T = args.T
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
 
     ### LOAD OR GENERATE THE PROBLEM INSTANCE
     # use here if the problem instance has already been created
@@ -42,18 +42,18 @@ if __name__ == "__main__":
         if args.problemType == 'FL':
             logging.info('Loading movie ratings...')
             bipartite_graph = load(args.input)  # this needs one single bipartite graph
-            bipartite_graph = bipartite_graph[0]
             target_partitions = load(args.partitions)
+            print(f"target partitions are: {target_partitions}")
             k_list = dict.fromkeys(target_partitions.keys(), args.k)
-            # k_list['Drama'] = args.constraints
-            # k_list['Comedy'] = args.constraints
             logging.info('...done. Defining a FacilityLocation Problem...')
             newProblem = FacilityLocation(bipartite_graph, k_list, target_partitions)
             cardinalities_k = list(k_list.values())
+            print(f"constraints are: {cardinalities_k}")
             sets_S = list(target_partitions.values())
             sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
-            new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k,
-                                                       sets_S)  # make sure the k_list and target_partitions
+            print(f"sets are: {sets_S}")
+            new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S)
+            # make sure the k_list and target_partitions
             # formats fit to cardinalities_k, sets_S format
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
@@ -66,6 +66,7 @@ if __name__ == "__main__":
 
             if args.partitions is not None:
                 target_partitions = load(args.partitions)
+                # print(target_partitions)
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
             else:
                 target_partitions = None
@@ -90,23 +91,22 @@ if __name__ == "__main__":
              newProblem)
 
     ### GENERATE THE ThresholdObjective OBJECTS
-    new_objectives = newProblem.translate()  # it should return a list of ThresholdObjective objects
+    new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
     num_objectives = len(new_objectives)
+    logging.info("ThresholdObjectives are generated.")
     # print(f"Threshold Objective: {new_objective.params}")
 
     ### CREATE THE OUTPUT DIRECTORY TO SAVE THE RESULTS IF NOT ALREADY EXISTS
-    output_dir = "results/" + args.policy + "/" + args.problemType + "/" + args.input.split("/")[-1] + "/k_" \
-                 + str(args.k) + "_" + str(args.T) + "_iter" + "/"
+    output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/k_{args.k}_{args.T}_iter/"
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         logging.info('...output directory is created...')
     sys.stderr.write('output directory is:' + output_dir)
 
-    frac_output = output_dir + 'fractional'
-    int_output = output_dir + 'integral'
+    output = output_dir + f"eta_{str(eta).replace('.', 'p')}"
+    # int_output = output_dir + f"eta_{str(eta).replace('.', 'p')}_integral"
 
-    
     # if args.traceType == 'sequential':
     #     if num_objectives < T:
     #         trace = list(range(num_objectives)) * math.ceil((1.0*T) / num_objectives)
@@ -120,11 +120,7 @@ if __name__ == "__main__":
     # print(f"trace is: {trace}")
 
     # GENERATE THE OCOPolicy OBJECT
-    if args.policy == 'OGD':
-        newPolicy = OCOPolicy(new_decision_set, new_objectives[0], eta)
-        logging.info("An Online Gradient Descent policy is generated.")
-
-    elif args.policy == 'OGA':
+    if args.policy == 'OGA':
         newPolicy = OGA(new_decision_set, new_objectives[0], eta)
         logging.info("An OGA policy is generated.")
 
@@ -133,7 +129,7 @@ if __name__ == "__main__":
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
     elif args.policy == 'Optimistic':
-        newPolicy = OptimisticPolicy(new_decision_set, new_objectives[0], eta)
+        newPolicy = OptimisticPolicy(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
         logging.info("An Optimistic policy is generated.")
 
     elif args.policy == 'KKL':
@@ -151,10 +147,10 @@ if __name__ == "__main__":
         linear_solver = newProblem.get_solver()
         initial_point = newProblem.get_initial_point()
         approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n, args.KKLalg, args.setting)
-        
+
         for w in ws:
-            assert np.all(w >= 0), "w not positive"        
-          
+            assert np.all(w >= 0), "w not positive"
+
         # set constants
         W = np.sqrt(m)  # ||w|| <= W
         R = np.sqrt(m)  # ||Phi(s)|| <= R
@@ -170,7 +166,7 @@ if __name__ == "__main__":
         print(f"R = {R}")
         print(f"lambda = {delta / (4 * (alpha + 2)**2 * R**2)}")
         print(f"KKL a-regret <= {(alpha + 1) * R * W / np.sqrt(T)}")
-        
+
         # initialize online algorithm
         alg = KKL(approx_alg, mapping, alpha, delta, eta, R, n)
 
@@ -183,9 +179,15 @@ if __name__ == "__main__":
             # TODO design backups if the algorithm is interrupted
             i = newPolicy.current_iteration
             logging.info(f"Running iteration #{i}...\n")  ## TODO format string
-            newPolicy.objective = new_objectives[trace[i]]
+            newPolicy.objective = new_objectives[i]
             newPolicy.step()
         logging.info("The algorithm is finished.")
+
+        newPolicy.objective = F
+        newPolicy.step()
+
+        opt_frac_reward = newPolicy.frac_rewards.pop()
+        opt_int_reward = newPolicy.int_rewards.pop()
 
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards
@@ -203,8 +205,10 @@ if __name__ == "__main__":
         print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
         print(f"cumulative averaged integral rewards: {cum_int_rewards}")
 
-        save(frac_output, [cum_frac_rewards, running_time])
-        save(int_output, [cum_int_rewards, running_time])
+        save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
+                      'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
+                      'opt_int_reward': opt_int_reward})
+        # save(int_output, [cum_int_rewards, running_time, opt_int_reward])
         logging.info("The rewards are saved to: " + output_dir + ".")
 
     if args.policy == 'KKL':

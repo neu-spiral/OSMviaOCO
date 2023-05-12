@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from ContinuousGreedy import UniformMatroidSolver, PartitionMatroidSolver, SamplerEstimator, PolynomialEstimator, \
-    ContinuousGreedy, StochasticGradientEstimator
+    ContinuousGreedy, StochasticGradientEstimator, generate_samples
 from networkx import Graph, DiGraph
 from networkx.algorithms import bipartite
 from oco_tools import ThresholdObjective
@@ -72,6 +72,15 @@ def find_derivatives(function_type, center, degree):
     return derivatives
 
 
+def wdnf_to_threshold(wdnf):
+    """
+    Given a WDNF object, returns a ThresholdObjective object.
+    :param wdnf:
+    :return:
+    """
+    pass
+
+
 class Problem(object):
     """Abstract class to parent classes of different problem instances.
     """
@@ -136,30 +145,62 @@ class Problem(object):
     def translate(self):
         """ takes self.wdnf_dict and returns the params of a ThresholdObjective
         """
+        n = self.problemSize
+        # sys.stderr.write('n: ' + str(n) + '\n')
         threshold_objectives = []
+        # C = range(len(self.wdnf_dict))
+        F = WDNF(dict(), -1)
         for graph in self.wdnf_dict:
             params = dict()
-            n = self.problemSize
-            sys.stderr.write('n: ' + str(n) + '\n')
             params['n'] = n
-            wdnfs = self.wdnf_dict[graph]
-            wdnfs.coefficients.pop((), None)
-            sys.stderr.write('wdnfs: ' + str(wdnfs.coefficients) + '\n')
-            C = len(wdnfs.coefficients)
-            sys.stderr.write('C: ' + str(C) + '\n')
+            wdnfs = self.wdnf_dict[graph].coefficients.copy()
+            wdnfs.pop((), None)
+            # sys.stderr.write('wdnfs: ' + str(wdnfs) + '\n')
+            C = range(len(wdnfs))
+            # sys.stderr.write('C: ' + str(C) + '\n')
             params['C'] = C
-            sys.stderr.write('b: ' + str(np.ones(C)) + '\n')
-            params['b'] = np.ones(C)
-            sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
-            params['w'] = np.ones((C, n))
-            print(list(self.wdnf_dict.keys()))
-            sys.stderr.write('S: ' + str(list(wdnfs.coefficients.keys())) + '\n')
-            params['S'] = [list(key) for key in list(wdnfs.coefficients.keys())]
-            sys.stderr.write('c: ' + str(list(wdnfs.coefficients.values())) + '\n')
-            params['c'] = [-1 * value for value in list(wdnfs.coefficients.values())]
-            # extensive tests will be added
+            # sys.stderr.write('b: ' + str(np.ones(len(C))) + '\n')
+            params['b'] = np.ones(len(C))
+            # sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
+            params['w'] = np.ones((len(C), n))
+            # print(list(self.wdnf_dict.keys()))
+            # sys.stderr.write('S: ' + str(list(wdnfs.keys())) + '\n')
+            params['S'] = [list(key) for key in list(wdnfs.keys())]
+            # sys.stderr.write('c: ' + str(list(wdnfs.values())) + '\n')
+            params['c'] = [-1 * value for value in list(wdnfs.values())]
+            # extensive tests
+            # y = dict.fromkeys(self.groundSet, 0.0)
+            # for _ in range(100):
+            #     x = dict(zip(y.keys(), np.random.randint(2, size=len(y)).tolist()))
+            #     x1 = np.array(list(x.values()))
+            #     print(f"x is {x} and wdnf(x) is {self.wdnf_dict[graph](x)} while ThresholdObjective(x) is "
+            #           f"{ThresholdObjective(params).eval(x1)}")
+            #     assert math.isclose(self.wdnf_dict[graph](x), ThresholdObjective(params).eval(x1), rel_tol=1e-5), \
+            #         f"TRANSLATION IS INCORRECT!"
+            F += (1.0 / self.instancesSize) * self.wdnf_dict[graph]
             threshold_objectives.append(ThresholdObjective(params))
-        return threshold_objectives
+        F_params = dict()
+        # print(f"F is {F.coefficients}")
+        F_wdnf = F.coefficients.copy()
+        F_wdnf.pop((), None)
+        F_params['n'] = n
+        C = range(len(F_wdnf))
+        F_params['C'] = C
+        F_params['b'] = np.ones(len(C))
+        F_params['w'] = np.ones((len(C), n))
+        F_params['S'] = [list(key) for key in list(F_wdnf.keys())]
+        F_params['c'] = [-1 * value for value in list(F_wdnf.values())]
+        # print(f"F_params: {F_params}")
+        # y = dict.fromkeys(self.groundSet, 0.0)
+        # for _ in range(100):
+        #     x = dict(zip(y.keys(), np.random.randint(2, size=len(y)).tolist()))
+        #     x1 = np.array(list(x.values()))
+        #     print(f"x is {x} and wdnf(x) is {F(x)} while ThresholdObjective(x) is "
+        #           f"{ThresholdObjective(F_params).eval(x1)}")
+        #     assert math.isclose(F(x), ThresholdObjective(F_params).eval(x1), rel_tol=1e-5), \
+        #         f"TRANSLATION IS INCORRECT!"
+        F = ThresholdObjective(F_params)
+        return threshold_objectives, F
 
 
 class InfluenceMaximization(Problem):
@@ -188,7 +229,7 @@ class InfluenceMaximization(Problem):
         wdnf_lengths = []
         for i in range(self.instancesSize):
             paths = nx.algorithms.dag.transitive_closure(graphs[i])
-            sys.stderr.write("paths of cascade " + str(i) + " are:" + str(graphs[i].edges()) + '\n')
+            # sys.stderr.write("paths of cascade " + str(i) + " are:" + str(graphs[i].edges()) + '\n')
             wdnf_list = [WDNF({tuple(sorted([node] + list(paths.predecessors(node)))): -1.0 / self.problemSize}, -1)
                          for node in self.groundSet]
             p_v = [len(key) for wdnf in wdnf_list for key in wdnf.coefficients]
@@ -199,17 +240,18 @@ class InfluenceMaximization(Problem):
             logging.info("\nAverage P_v size is %s, maximum P_v size is %d, minimum P_v size is %d, and standard "
                          "deviation of P_v's is %s" % (avg_p_v, max_p_v, min_p_v, std_dev_p_v))
             resulting_wdnf = sum(wdnf_list) + WDNF({(): 1.0}, -1)
-            sys.stderr.write("wdnf is " + str(resulting_wdnf.coefficients) + '\n')
+            # sys.stderr.write("wdnf is " + str(resulting_wdnf.coefficients) + '\n')
             wdnf_lengths.append(len(resulting_wdnf.coefficients))
             dependencies.update(resulting_wdnf.find_dependencies())
             wdnf_dict[i] = resulting_wdnf  # prod(1 - x_u) for all u in P_v
+            logging.info(f"Cascade {str(i)} WDNFs are generated.\n")
         self.avg_wdnf_len = (sum(wdnf_lengths) * 1.0) / len(wdnf_lengths)
         self.max_wdnf_len = max(wdnf_lengths)
         logging.info('\nAverage WDNF size is %d and maximum WDNF size is %d.' % (self.avg_wdnf_len, self.max_wdnf_len))
         self.wdnf_dict = wdnf_dict
         self.utility_function = np.log1p
         self.dependencies = dependencies
-        sys.stderr.write("wdnf_dict is " + str(wdnf_dict) + '\n')
+        # sys.stderr.write("wdnf_dict is " + str(wdnf_dict) + '\n')
         logging.info('... done. An instance of a influence maximization problem has been created.')
 
     def get_solver(self):
@@ -295,12 +337,19 @@ class FacilityLocation(Problem):
         """
         super(FacilityLocation, self).__init__()
         X = {n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0}  # facilities, movies
-        self.X = map(int, X)  # facilities, movies
+        self.X = set(map(int, X))  # facilities, movies
+        print(f"movies are: {X}")
         self.Y = set(bipartite_graph) - X  # customers, users
+        print(f"users are: {self.Y}")
         self.constraints = constraints
+        print(f"constraints are: {constraints}")
         # self.partitioned_set = dict.fromkeys(self.Y, self.X)  # ???
         self.target_partitions = target_partitions
-        self.problemSize = len(self.Y)  # number of customers, users
+        print(f"target partitions are: {target_partitions}")
+        self.problemSize = len(self.X)  # number of facilities, movies
+        print(f"# movies is: {self.problemSize}")
+        self.instancesSize = len(self.Y)  # number of customers, users
+        print(f"# users is: {self.instancesSize}")
         wdnf_dict = dict()
         dependencies = dict()
         wdnf_lengths = []
@@ -308,16 +357,16 @@ class FacilityLocation(Problem):
             weights = dict()
             # weights = {facility: bipartite_graph.get_edge_data(facility, y)['weight'] for facility in self.X}
             for facility in self.X:
-                try:
-                    weights[facility] = bipartite_graph.get_edge_data(str(facility), y)['weight']
-                except TypeError:
-                    weights[facility] = 0.0
+                weights[facility] = bipartite_graph.get_edge_data(facility, y)['weight'] \
+                    if bipartite_graph.has_edge(facility, y) else 0.0
             weights[len(list(self.X)) + 1] = 0.0
+            print(f"ratings of user {y} are: {weights}")
             descending_weights = sorted(weights.values(), reverse=True)
+            print(f"sorted ratings of user {y} are: {descending_weights}")
             indices = sorted(range(len(weights.values())), key=lambda k: list(weights.values())[k], reverse=True)
             wdnf_so_far = WDNF(dict(), -1)
             for i in range(len(list(self.X))):
-                index = tuple(int(weights.keys()[index]) for index in indices[:(i + 1)])
+                index = tuple(int(list(weights.keys())[index]) for index in indices[:(i + 1)])
                 wdnf_so_far += (descending_weights[i] - descending_weights[i + 1]) * \
                                (WDNF({(): 1.0}, -1) + (-1.0) * WDNF({index: 1.0}, -1))
                 if descending_weights[i + 1] == 0:
