@@ -310,12 +310,7 @@ class FSF(OCOPolicy):
 
 
 class OnlineTBG(OCOPolicy):
-<<<<<<< HEAD
     def __init__(self,decision_set:ZeroOneDecisionSet,  objective: ThresholdObjective, n: int, eta: float, n_colors: int):
-=======
-    def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, n: int, eta: float,
-                 n_slots: int, items: list, n_colors: int):
->>>>>>> c53c9f08216a6fa2649133cbee1bdbb96577803d
         super().__init__(decision_set, objective, eta)
         # self.experts = {}
         self.experts = {}
@@ -431,7 +426,6 @@ def generate_non_stationary_problem():
                                         'b': b,
                                         'C': C})
         objectives.append(objective)
-<<<<<<< HEAD
     return objectives
 
 
@@ -459,15 +453,6 @@ if __name__ == "__main__":
     run_non_stationary_exp(policyTBG, 'TBG')
     run_non_stationary_exp(policyFSF, 'FSF')
     plt.legend()
-=======
-    constraints = RelaxedPartitionMatroid(n, cardinalities_k=[n // 4], sets_S=[list(range(n))])
-    policy = OnlineTBG(decision_set=constraints, objective=objectives[0], n=n, eta=.01, n_colors=20, n_slots=5,
-                       items=[list(range(n))] * 5)
-    T = 100
-    for t in range(T):
-        policy.step()
-    plt.plot(taverage(policy.frac_rewards))
->>>>>>> c53c9f08216a6fa2649133cbee1bdbb96577803d
     plt.show()
 
 
