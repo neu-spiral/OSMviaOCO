@@ -66,6 +66,7 @@ class ZeroOneDecisionSet:
         self.x = x  # Store decision variable
         self.euclidean_prob = None
         self.bregman_prob = None
+        self.support = np.ones(n)
 
     def setup_constraints(self, additional_constraints):
         # Each time additional constraints are introduced redefine the problem. Usually setup_constraints should only
@@ -86,8 +87,8 @@ class ZeroOneDecisionSet:
 
     def project_bregman(self, y, warm_start=False):
         if self.bregman_prob is None:
-            divergence = cp.sum(- cp.entr(self.x + self.gamma)) + cp.sum(
-                - cp.multiply((self.x + self.gamma), cp.log(self.y_param + self.gamma)))
+            divergence = cp.sum(- cp.entr(self.x[self.support] + self.gamma)) + cp.sum(
+                - cp.multiply((self.x[self.support] + self.gamma), cp.log(self.y_param[self.support] + self.gamma)))
             self.bregman_obj = cp.Minimize(
                 divergence)  # Euclidean projection finds the closest point in the set to unfeasible y
             self.bregman_prob = cp.Problem(self.bregman_obj, self.constraints)  # Store problem instance
@@ -108,6 +109,7 @@ class RelaxedPartitionMatroid(ZeroOneDecisionSet):
                 1 - 2 * self.sigma * self.n) + self.sigma * len(sets_S[i]) for i in range(
             len(cardinalities_k))])  # add additional constraints
         # and inherit functionality from [0, 1] decision set
+        self.support = np.unique(sets_S)
 
 
 class OCOPolicy:
@@ -172,6 +174,7 @@ class OGA(OCOPolicy):
 class ShiftedNegativeEntropyOMD(OCOPolicy):
     def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float, gamma: float):
         super().__init__(decision_set, objective, eta)
+        self.support = np.unique(decision_set.sets_S)
         self.gamma = gamma
 
     def step(self, eta=None, decision=None, supergradient=None):
@@ -182,7 +185,7 @@ class ShiftedNegativeEntropyOMD(OCOPolicy):
         supergradient = self.supergradient if supergradient is None else supergradient
         self.decision_z = (self.decision + self.gamma) * np.exp(
             eta * self.supergradient) - self.gamma
-        self.decision = self.decision_set.project_bregman(self.decision_z)  # Take gradient step
+        self.decision =  self.decision_set.project_bregman(self.decision_z)  # Take gradient step
 
 
 class MetaPolicy(OCOPolicy):
@@ -272,12 +275,12 @@ class EXP3:
 
 class FSF(OCOPolicy):
     def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective,
-                 eta: float, beta: float):
+                 eta: float, gamma: float):
         super().__init__(decision_set, objective, eta)
         self.k = decision_set.cardinalities_k[0]
         self.n = decision_set.n
         simplex = RelaxedPartitionMatroid(decision_set.n, cardinalities_k=[1], sets_S=[list(range(decision_set.n))])
-        self.experts = [FixedShare(simplex, objective, eta=eta, beta=beta) for _ in range(self.k)]
+        self.experts = [FixedShare(simplex, objective, eta=eta, beta=gamma) for _ in range(self.k)]
 
     def step(self, eta=None):
 
@@ -305,19 +308,23 @@ class FSF(OCOPolicy):
 
 
 class OnlineTBG(OCOPolicy):
-    def __init__(self,decision_set:ZeroOneDecisionSet,  objective: ThresholdObjective, n: int, eta: float, n_slots: int, items: list, n_colors: int):
+    def __init__(self,decision_set:ZeroOneDecisionSet,  objective: ThresholdObjective, n: int, eta: float, n_colors: int):
         super().__init__(decision_set, objective, eta)
         # self.experts = {}
         self.experts = {}
-        self.items = items
-        self.n_slots = n_slots
+        self.items = []
+        for i, k in enumerate(decision_set.cardinalities_k):
+            self.items.extend([decision_set.sets_S[i]]*k)
+
+        self.n_slots = sum(decision_set.cardinalities_k)
+
         self.n_colors = n_colors
         self.n = n
         self.objective = objective
-        for slot in range(n_slots):
+        for slot in range(self.n_slots):
             for c in range(n_colors):
-                simplex = RelaxedPartitionMatroid(len(items[slot]), cardinalities_k=[1],
-                                                  sets_S=[list(range(len(items[slot])))])
+                simplex = RelaxedPartitionMatroid(len(self.items[slot]), cardinalities_k=[1],
+                                                  sets_S=[self.items[slot]])
                 self.experts[(slot, c)] = FixedShare(simplex, objective, eta=eta, beta=0)  # Hedge
 
     def step(self, eta=None):
@@ -359,8 +366,7 @@ class OnlineTBG(OCOPolicy):
         return G, G_vec
 
 
-if __name__ == "__main__":
-    # Generate coverage example
+def generate_non_stationary_problem():
     np.random.seed(42)
     w = 30
     n_collections = 20
@@ -418,13 +424,36 @@ if __name__ == "__main__":
                                         'b': b,
                                         'C': C})
         objectives.append(objective)
+    return objectives
+
+
+if __name__ == "__main__":
+
+    # Generate coverage example
+    objectives = generate_non_stationary_problem()
+    n = objectives[0].n
     constraints = RelaxedPartitionMatroid(n, cardinalities_k=[n//4], sets_S=[list(range(n))])
-    policy = OnlineTBG(decision_set=constraints,objective=objectives[0],n = n, eta=.01, n_colors=20, n_slots=5, items=[list(range(n))] * 5)
-    T = 100
-    for t in range(T):
-        policy.step()
-    plt.plot(taverage(policy.frac_rewards))
+    policyTBG = OnlineTBG(decision_set=constraints,objective=objectives[0],n = n, eta=.01, n_colors=2)
+    policyFSF = FSF(decision_set=constraints,objective=objectives[0], eta=.05, gamma = .001)
+    policyOMD = ShiftedNegativeEntropyOMD(decision_set=constraints,objective=objectives[0], eta=.05, gamma=0.0)
+    policyShiftedOMD = ShiftedNegativeEntropyOMD(decision_set=constraints, objective=objectives[0], eta=.05, gamma=0.02)
+    policyOGA = OGA(decision_set=constraints, objective=objectives[0], eta=.01)
+    def run_non_stationary_exp(policy, name, T_half = 50):
+        for t in range(T_half):
+            policy.step()
+        policy.objective = objectives[1]
+        for t in range(T_half):
+            policy.step()
+        plt.plot(taverage(policy.frac_rewards), label = name)
+    run_non_stationary_exp(policyOMD, 'OMD')
+    run_non_stationary_exp(policyShiftedOMD, 'SOMD')
+    run_non_stationary_exp(policyOGA, 'OGA')
+    run_non_stationary_exp(policyTBG, 'TBG')
+    run_non_stationary_exp(policyFSF, 'FSF')
+    plt.legend()
     plt.show()
+
+
     # # policy = FSF(decision_set=constraints,objective=objectives[0],eta = .01, beta =.01)
     # policy = ShiftedNegativeEntropyOMD(decision_set=constraints,objective=objectives[0],eta = .01, gamma=.01)
     # policy.objective = objectives[0]

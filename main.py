@@ -125,7 +125,7 @@ if __name__ == "__main__":
         logging.info("An OGA policy is generated.")
 
     elif args.policy == 'OMD':
-        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta)
+        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta, gamma=0.0)
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
     elif args.policy == 'Optimistic':
