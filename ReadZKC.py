@@ -15,7 +15,7 @@ if __name__ == "__main__":
     parser.add_argument('--n', type=int, default=10, help='# of cascades')
     parser.add_argument('--p', type=float, default=0.1, help='probability of infection')
     args = parser.parse_args()
-
+    np.random.seed(42)
     logging.basicConfig(level=logging.INFO)
     logging.info('Reading the Zachary Karate Club graph...')
     # Network topology

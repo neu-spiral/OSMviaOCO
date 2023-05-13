@@ -29,9 +29,6 @@ if __name__ == "__main__":
     font_size = args.font_size
     marker_size = args.marker_size
     plt.rcParams.update({'font.size': font_size})
-    # poly_marker, samp_marker, swd_marker = 'X', '^', 's'
-    # poly_line, samp_line, swd_line = 'dashed', 'dashdot', 'dotted'
-    # poly_label, samp_label, swd_label = 'POLY', 'SAMP', 'SWD'
 
     path = args.input  # "./results/continuous_greedy"
     files = dict()

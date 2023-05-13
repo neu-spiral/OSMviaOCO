@@ -11,7 +11,7 @@ if __name__ == "__main__":
     file_path = 'datasets/ml-datasets/ml-10M100K/ratings.dat'
     partition_path = 'datasets/ml-datasets/ml-10M100K/movies.dat'
     n = 3000  # subgraph size
-
+    np.random.seed(42)
     logging.basicConfig(level=logging.INFO)
     logging.info('Reading ratings...')
     with open(file_path, 'r') as f:
@@ -91,9 +91,6 @@ if __name__ == "__main__":
     numOfNodes = B.number_of_nodes()
     numOfEdges = B.number_of_edges()
     logging.info('\nCreated a graph with %d nodes and %d edges' % (numOfNodes, numOfEdges))
-
-    # save(f"datasets/MovieLens_{len(users)}_users_{len(movies)}_movies", B)
-    # save(f"datasets/MovieLens_{len(users)}_users_{len(movies)}_movies_partitions", target_partitions)
 
     with open(f"datasets/MovieLens_{len(users)}_users_{len(movies)}_movies", "wb") as f:
         pickle.dump(B, f)
