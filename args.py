@@ -7,7 +7,7 @@ def create_parser():
     parser.add_argument('--problem', type=str, help='If the problem instance is created before, provide it here to save'
                                                     ' time instead of recreating it.')
     parser.add_argument('--problemType', default='IM', type=str, help='Type of the problem instance',
-                        choices=['FL', 'IM'])
+                        choices=['FL', 'IM', 'TF'])
     parser.add_argument('--input', default='', type=str,
                         help='Input file to generate problem instances from')
     parser.add_argument('--partitions', default=None,

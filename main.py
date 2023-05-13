@@ -1,5 +1,5 @@
 from helpers import save, load
-from ProblemInstances import InfluenceMaximization, FacilityLocation
+from ProblemInstances import InfluenceMaximization, FacilityLocation, TeamFormation
 from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OCOPolicy, OGA, \
     ShiftedNegativeEntropyOMD, OptimisticPolicy
 from KKL.translate import Translator
@@ -81,6 +81,22 @@ if __name__ == "__main__":
                 sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
                 new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S)
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
+
+        elif args.problemType == 'TF':
+            logging.info('Loading team formation dataset...')
+            functions = load(args.input)
+            print(f'h_0 = {functions[0][0]}')
+            target_partitions = load(args.partitions)
+            print(f"target partitions are: {target_partitions}")
+            k_list = dict.fromkeys(target_partitions.keys(), args.k)
+            logging.info('...done. Defining a FacilityLocation Problem...')
+            newProblem = TeamFormation(functions, k_list, target_partitions)
+            cardinalities_k = list(k_list.values())
+            print(f"constraints are: {cardinalities_k}")
+            sets_S = list(target_partitions.values())
+            sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
+            print(f"sets are: {sets_S}")
+            new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S)
 
         # generate a file for problems if it does not already exist
         problem_dir = "problems/"

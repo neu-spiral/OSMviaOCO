@@ -149,7 +149,7 @@ class Problem(object):
         # sys.stderr.write('n: ' + str(n) + '\n')
         threshold_objectives = []
         # C = range(len(self.wdnf_dict))
-        F = WDNF(dict(), -1)
+        F = WDNF(dict(), self.wdnf_dict[0].sign)
         for graph in self.wdnf_dict:
             params = dict()
             params['n'] = n
@@ -415,6 +415,34 @@ class FacilityLocation(Problem):
         """
         return dict.fromkeys(self.X, 0.0)  # MAP TO INTEGER!
 
+class TeamFormation(Problem):
+    '''
+        Quadratic set functions (QSF): f(x) = h^T x + 1/2 x^T H x
+    '''
+    def __init__(self, functions, constraints, target_partitions=None):
+        self.problemSize = len(functions[0][0]) # n = number of individuals = len(h)
+        self.instancesSize = len(functions)
+        self.constraints = constraints
+        self.target_partitions = target_partitions
+        self.wdnfs = [self.convert_to_WDNF(f) for f in functions]
+        self.wdnf_dict = {}
+        for t in range(len(self.wdnfs)):
+            self.wdnf_dict[t] = self.wdnfs[t]
 
+    def convert_to_WDNF(self, f):
+        h, H = f
+        n = self.problemSize
+        coefficients = {}
+        # linear terms
+        for i in range(n):
+            coefficients[(i,)] = h[i]
+            
+        # quadratic terms H_{i,j} x_i*x_j
+        for i in range(n-1):
+            for j in range(i+1, n):
+                coefficients[(i, j)] = 2 * H[i][j]
+        
+        return WDNF(coefficients, sign=1)
+        
 if __name__ == "__main__":
     B = 5
