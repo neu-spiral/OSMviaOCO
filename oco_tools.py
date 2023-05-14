@@ -161,7 +161,6 @@ class OGA(OCOPolicy):
         super().step()
         if self.bandit:
             u = sample_spherical(self.decision_set.n)
-            print(f"sample_spherical returns {u}")
             self.supergradient = u * self.objective.eval(self.decision + self.decision_set.sigma * u)
         else:
             self.supergradient = self.objective.supergradient(self.decision)  # Compute supergradient

@@ -1,7 +1,7 @@
 from helpers import save, load
 from ProblemInstances import InfluenceMaximization, FacilityLocation, TeamFormation
-from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OCOPolicy, OGA, \
-    ShiftedNegativeEntropyOMD, OptimisticPolicy
+from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OGA, \
+    ShiftedNegativeEntropyOMD, MetaPolicy, OptimisticPolicy, FixedShare, FSF, OnlineTBG
 from KKL.translate import Translator
 from KKL.mapping import WDNFMapping, IdentityMapping
 from KKL.offline_alg import ApproxGreedy, ApproxAlgInterval
@@ -145,9 +145,25 @@ if __name__ == "__main__":
         newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta, gamma=0.0)
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
+    elif args.policy == 'Meta':
+        newPolicy = MetaPolicy(new_decision_set, new_objectives[0], eta, gamma=0.0)
+        logging.info("A Meta policy is generated.")
+
     elif args.policy == 'Optimistic':
         newPolicy = OptimisticPolicy(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
         logging.info("An Optimistic policy is generated.")
+
+    elif args.policy == 'Fixed':
+        newPolicy = FixedShare(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
+        logging.info("A fixed share policy is generated.")
+
+    elif args.policy == 'FSF':
+        newPolicy = FSF(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
+        logging.info("An FSF policy is generated.")
+
+    elif args.policy == 'OnlineTBG':
+        newPolicy = OnlineTBG(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
+        logging.info("An online TBG policy is generated.")
 
     elif args.policy == 'KKL':
         logging.info("A KKL policy is generated.")
