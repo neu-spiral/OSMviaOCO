@@ -15,6 +15,7 @@ def create_parser():
     parser.add_argument('--policy', default='OGA', type=str, help='Type of the algorithm',
                         choices=['OGA', 'OMD', 'Meta', 'Optimistic', 'Fixed', 'FSF', 'OnlineTBG', 'KKL'])  # policies
     parser.add_argument('--eta', default=0.1, type=float, help='eta of the policy')
+    parser.add_argument('--gamma', default=0.0, type=float, help='gamma of the policy')
     parser.add_argument('--k', default=1, type=int, help='cardinality k for each partition')
     parser.add_argument('--seed', default=42, type=int,
                         help='seed to control the randomness of the algorithm')

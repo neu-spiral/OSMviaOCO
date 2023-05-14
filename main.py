@@ -26,6 +26,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     eta = args.eta
+    gamma = args.gamma
     seed = args.seed
     T = args.T
     logging.basicConfig(level=logging.INFO)
@@ -142,7 +143,7 @@ if __name__ == "__main__":
         logging.info("An OGA policy is generated.")
 
     elif args.policy == 'OMD':
-        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta, gamma=0.0)
+        newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta, gamma)
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
     elif args.policy == 'Meta':
@@ -158,11 +159,11 @@ if __name__ == "__main__":
         logging.info("A fixed share policy is generated.")
 
     elif args.policy == 'FSF':
-        newPolicy = FSF(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
+        newPolicy = FSF(new_decision_set, new_objectives[0], eta, gamma)
         logging.info("An FSF policy is generated.")
 
     elif args.policy == 'OnlineTBG':
-        newPolicy = OnlineTBG(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
+        newPolicy = OnlineTBG(new_decision_set, new_objectives[0], n=n, eta=eta, n_colors=2)
         logging.info("An online TBG policy is generated.")
 
     elif args.policy == 'KKL':
