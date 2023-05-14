@@ -149,14 +149,15 @@ class Problem(object):
         # sys.stderr.write('n: ' + str(n) + '\n')
         threshold_objectives = []
         # C = range(len(self.wdnf_dict))
-        F = WDNF(dict(), self.wdnf_dict[0].sign)
+        sign = self.wdnf_dict[0].sign
+        F = WDNF(dict(), sign)
         for graph in self.wdnf_dict:
             params = dict()
             params['n'] = n
-            wdnfs = self.wdnf_dict[graph].coefficients.copy()
-            wdnfs.pop((), None)
+            wdnf = self.wdnf_dict[graph].coefficients.copy()
+            wdnf.pop((), None)
             # sys.stderr.write('wdnfs: ' + str(wdnfs) + '\n')
-            C = range(len(wdnfs))
+            C = range(len(wdnf))
             # sys.stderr.write('C: ' + str(C) + '\n')
             params['C'] = C
             # sys.stderr.write('b: ' + str(np.ones(len(C))) + '\n')
@@ -165,9 +166,9 @@ class Problem(object):
             params['w'] = np.ones((len(C), n))
             # print(list(self.wdnf_dict.keys()))
             # sys.stderr.write('S: ' + str(list(wdnfs.keys())) + '\n')
-            params['S'] = [list(key) for key in list(wdnfs.keys())]
+            params['S'] = [list(key) for key in list(wdnf.keys())]
             # sys.stderr.write('c: ' + str(list(wdnfs.values())) + '\n')
-            params['c'] = [-1 * value for value in list(wdnfs.values())]
+            params['c'] = [sign * value for value in list(wdnf.values())]
             # extensive tests
             # y = dict.fromkeys(self.groundSet, 0.0)
             # for _ in range(100):
@@ -424,10 +425,13 @@ class TeamFormation(Problem):
         self.instancesSize = len(functions)
         self.constraints = constraints
         self.target_partitions = target_partitions
+        self.groundSet = set(range(self.problemSize))
         self.wdnfs = [self.convert_to_WDNF(f) for f in functions]
         self.wdnf_dict = {}
         for t in range(len(self.wdnfs)):
             self.wdnf_dict[t] = self.wdnfs[t]
+        
+        self.thresholds = [self.convert_to_Thresholds(f) for f in functions]
 
     def convert_to_WDNF(self, f):
         h, H = f
@@ -440,9 +444,29 @@ class TeamFormation(Problem):
         # quadratic terms H_{i,j} x_i*x_j
         for i in range(n-1):
             for j in range(i+1, n):
-                coefficients[(i, j)] = 2 * H[i][j]
+                coefficients[(i, j)] = H[i][j]
         
         return WDNF(coefficients, sign=1)
-        
+
+    def convert_to_Thresholds(self, f):
+        h, H = f
+        n = self.problemSize
+        C = int(1 + n * (n-1) / 2)
+        w = [np.array(h) + np.dot(H, np.ones(n))] + [[1] * n] * (C-1)
+        b = [1e+20] + [1] * (C-1)
+        S = [list(range(n))] + [[i,j] for j in range(n) for i in range(n) if i < j]
+        c = [1] + [-H[i][j] for j in range(n) for i in range(n) if i < j]
+        params = {}
+        params['n'] = n
+        params['C'] = list(range(C))
+        params['w'] = w
+        params['b'] = b
+        params['S'] = S
+        params['c'] = c
+
+        threshold_obj = ThresholdObjective(params)
+        assert threshold_obj.eval(np.zeros(n)) == 0, "translation not correct"
+        return threshold_obj
+
 if __name__ == "__main__":
     B = 5
