@@ -2,6 +2,7 @@ import itertools
 
 from helpers import partition_matroid_round, sample_spherical, taverage
 from itertools import product
+from time import time
 from typing import Type, List
 import numpy as np
 import cvxpy as cp
@@ -45,7 +46,7 @@ class ThresholdObjective:
 
     def supergradient(self, x):
         x = np.array(x)
-        is_not_saturated = [np.sum(x[self.S[i]] * self.w[i][self.S[i]]) <= self.b[i] for i in self.C]
+        is_not_saturated = [np.sum(x[self.S[i]] * np.array(self.w[i])[self.S[i]]) <= self.b[i] for i in self.C]
         return np.array(
             [np.sum([self.c[i] * self.w[i][k] * int(k in self.S[i] and is_not_saturated[i]) for i in self.C]) for k in
              range(x.size)])  # Evaluate supergradient
@@ -120,6 +121,8 @@ class OCOPolicy:
         self.int_rewards = []
         self.decision = np.zeros(decision_set.n)
         self.decisions = []
+        self.int_decisions = []
+        self.running_time = []
         self.current_iteration = 1
         if isinstance(decision_set, RelaxedPartitionMatroid):
             self.decision = np.zeros(decision_set.n)
@@ -130,14 +133,19 @@ class OCOPolicy:
             raise Exception('Not implemented')
 
     def step(self):
+        start = time()
         # print(f"Threshold Objective is {self.objective.params}")
         # print(f"decision is {self.decision}")
         frac_reward = self.objective.eval(self.decision)
         self.decisions.append(self.decision)
-        int_reward = self.objective.eval(self.round(self.decision))
+        int_decision = self.round(self.decision)
+        self.int_decisions.append(int_decision)
+        int_reward = self.objective.eval(int_decision)
+        
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
         self.int_rewards.append(int_reward)  # Collect value of integral reward
         self.current_iteration += 1
+        self.running_time.append(time() - start)
 
     def round(self, x):
         if isinstance(self.decision_set, RelaxedPartitionMatroid):
