@@ -16,7 +16,7 @@ from matplotlib.transforms import Bbox
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Plotter for results',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--input', default='./results/OGA', type=str,
+    parser.add_argument('--input', default='./results', type=str,
                         help='Input directory for the plots')
     parser.add_argument('--type', default='ITERvsREWARDS', type=str, help='Type of the plot',
                         choices=['TIMEvsREWARDS', 'ITERvsREWARDS'])

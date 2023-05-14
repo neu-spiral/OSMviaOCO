@@ -2,7 +2,6 @@ import itertools
 
 from helpers import partition_matroid_round, sample_spherical, taverage
 from itertools import product
-from time import time
 from typing import Type, List
 import numpy as np
 import cvxpy as cp
@@ -121,7 +120,6 @@ class OCOPolicy:
         self.int_rewards = []
         self.decision = np.zeros(decision_set.n)
         self.decisions = []
-        self.running_time = []
         self.current_iteration = 1
         if isinstance(decision_set, RelaxedPartitionMatroid):
             self.decision = np.zeros(decision_set.n)
@@ -132,7 +130,6 @@ class OCOPolicy:
             raise Exception('Not implemented')
 
     def step(self):
-        start = time()
         # print(f"Threshold Objective is {self.objective.params}")
         # print(f"decision is {self.decision}")
         frac_reward = self.objective.eval(self.decision)
@@ -141,7 +138,6 @@ class OCOPolicy:
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
         self.int_rewards.append(int_reward)  # Collect value of integral reward
         self.current_iteration += 1
-        self.running_time.append(time() - start)
 
     def round(self, x):
         if isinstance(self.decision_set, RelaxedPartitionMatroid):

@@ -1,6 +1,6 @@
 from helpers import save, load
 from ProblemInstances import InfluenceMaximization, FacilityLocation, TeamFormation
-from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OGA, \
+from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OGA, OCOPolicy, \
     ShiftedNegativeEntropyOMD, MetaPolicy, OptimisticPolicy, FixedShare, FSF, OnlineTBG
 from KKL.translate import Translator
 from KKL.mapping import WDNFMapping, IdentityMapping
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
     elif args.policy == 'Meta':
-        newPolicy = MetaPolicy(new_decision_set, new_objectives[0], eta, gamma=0.0)
+        newPolicy = MetaPolicy(new_decision_set, new_objectives[0], eta)
         logging.info("A Meta policy is generated.")
 
     elif args.policy == 'Optimistic':
@@ -210,12 +210,15 @@ if __name__ == "__main__":
     if args.policy != 'KKL':
         ## RUN THE OCOPolicy
         np.random.seed(seed)
+        running_time = []
+        start = time()
         while newPolicy.current_iteration < args.T:
             # TODO design backups if the algorithm is interrupted
             i = newPolicy.current_iteration
             logging.info(f"Running iteration #{i}...\n")  ## TODO format string
             newPolicy.objective = new_objectives[i]
             newPolicy.step()
+            running_time.append(time() - start)
         logging.info("The algorithm is finished.")
 
         newPolicy.objective = F  # new policy
