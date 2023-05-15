@@ -12,10 +12,12 @@ import sys
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generate Cascades from ZKC data',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--n', type=int, default=10, help='# of cascades')
+    parser.add_argument('--n', type=int, default=100, help='# of cascades')
     parser.add_argument('--p', type=float, default=0.1, help='probability of infection')
+    parser.add_argument('--seed', type=int, default=42, help='seed to control randomness')
     args = parser.parse_args()
-    np.random.seed(42)
+    seed = args.seed
+    np.random.seed(seed)
     logging.basicConfig(level=logging.INFO)
     logging.info('Reading the Zachary Karate Club graph...')
     # Network topology
@@ -47,10 +49,10 @@ if __name__ == "__main__":
         numOfNodes = graphs[cascade].number_of_nodes()
         numOfInfEdges = graphs[cascade].number_of_edges()
         logging.info('\nCreated cascade #%d with %d nodes and %d edges.' % (cascade, numOfNodes, numOfInfEdges))
-    logging.info(']n...done. Created %d cascades with %s infection probability.' % (numberOfCascades, p))
+    logging.info('n...done. Created %d cascades with %s infection probability.' % (numberOfCascades, p))
 
-    with open("datasets/ZKC_" + str(numberOfCascades) + "_" + str(p).replace('.', ''), "wb") as f:
+    with open(f"datasets/ZKC_{numberOfCascades}_{str(p).replace('.', '')}_{seed}", "wb") as f:
         pickle.dump(graphs, f)
 
-    with open("datasets/ZKC_" + str(numberOfCascades) + "_" + str(p).replace('.', '') + "_partitions", "wb") as f:
+    with open(f"datasets/ZKC_{numberOfCascades}_{str(p).replace('.', '')}_{seed}_partitions", "wb") as f:
         pickle.dump(target_partitions, f)

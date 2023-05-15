@@ -16,6 +16,8 @@ def create_parser():
                         choices=['OGA', 'OMD', 'Meta', 'Optimistic', 'Fixed', 'FSF', 'OnlineTBG', 'KKL'])  # policies
     parser.add_argument('--eta', default=0.1, type=float, help='eta of the policy')
     parser.add_argument('--gamma', default=0.0, type=float, help='gamma of the policy')
+    parser.add_argument('--n_colors', default=2, type=int,
+                        help='n_colors parameters to be used by the OnlineTBG policy')
     parser.add_argument('--k', default=1, type=int, help='cardinality k for each partition')
     parser.add_argument('--seed', default=42, type=int,
                         help='seed to control the randomness of the algorithm')

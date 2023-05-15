@@ -2,16 +2,23 @@ from helpers import save
 from io import open
 from networkx import Graph
 from networkx.algorithms import bipartite
+import argparse
 import logging
 import networkx as nx
 import pickle
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Generate a subset from MovieLens data',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--n', type=int, default=300, help='# of cascades')
+
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO)
+    logging.info('Reading the MovieLens graph...')
     file_path = 'datasets/ml-datasets/ml-10M100K/ratings.dat'
     partition_path = 'datasets/ml-datasets/ml-10M100K/movies.dat'
-    n = 3000  # subgraph size
-    np.random.seed(42)
+    n = args.n  # subgraph size
     logging.basicConfig(level=logging.INFO)
     logging.info('Reading ratings...')
     with open(file_path, 'r') as f:

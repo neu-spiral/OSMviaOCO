@@ -27,6 +27,7 @@ if __name__ == "__main__":
 
     eta = args.eta
     gamma = args.gamma
+    n_colors = args.n_colors
     seed = args.seed
     T = args.T
     logging.basicConfig(level=logging.INFO)
@@ -44,9 +45,15 @@ if __name__ == "__main__":
         if args.problemType == 'FL':
             logging.info('Loading movie ratings...')
             bipartite_graph = load(args.input)  # this needs one single bipartite graph
-            target_partitions = load(args.partitions)
-            print(f"target partitions are: {target_partitions}")
-            k_list = dict.fromkeys(target_partitions.keys(), args.k)
+            if args.partitions is not None:
+                target_partitions = load(args.partitions)
+                # print(f"target partitions are: {target_partitions}")
+                k_list = dict.fromkeys(target_partitions.keys(), args.k)
+                constraints = 'partition_matroid'
+            else:
+                target_partitions = None
+                k_list = [args.k]
+                constraints = 'cardinality'
             logging.info('...done. Defining a FacilityLocation Problem...')
             newProblem = FacilityLocation(bipartite_graph, k_list, target_partitions)
             cardinalities_k = list(k_list.values())
@@ -70,17 +77,18 @@ if __name__ == "__main__":
                 target_partitions = load(args.partitions)
                 # print(target_partitions)
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
+                constraints = 'partition_matroid'
             else:
                 target_partitions = None
-                k_list = args.k
+                k_list = [args.k]
+                constraints = 'cardinality'
             logging.info('...done. Just loaded %d cascades.' % (len(graphs)))
             logging.info('Defining an InfluenceMaximization problem...')
             newProblem = InfluenceMaximization(graphs, k_list, target_partitions)
-            if args.policy != 'KKL':
-                cardinalities_k = list(k_list.values())
-                sets_S = list(target_partitions.values())
-                sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
-                new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S)
+            cardinalities_k = list(k_list.values())
+            sets_S = list(target_partitions.values())
+            sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
+            new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S)
             logging.info('...done. %d seeds will be selected from each partition.' % args.k)
 
         elif args.problemType == 'TF':
@@ -90,7 +98,7 @@ if __name__ == "__main__":
             target_partitions = load(args.partitions)
             print(f"target partitions are: {target_partitions}")
             k_list = dict.fromkeys(target_partitions.keys(), args.k)
-            logging.info('...done. Defining a FacilityLocation Problem...')
+            logging.info('...done. Defining a TeamFormation Problem...')
             newProblem = TeamFormation(functions, k_list, target_partitions)
             cardinalities_k = list(k_list.values())
             print(f"constraints are: {cardinalities_k}")
@@ -114,16 +122,6 @@ if __name__ == "__main__":
     logging.info("ThresholdObjectives are generated.")
     # print(f"Threshold Objective: {new_objective.params}")
 
-    ### CREATE THE OUTPUT DIRECTORY TO SAVE THE RESULTS IF NOT ALREADY EXISTS
-    output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/k_{args.k}_{args.T}_iter/"
-
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        logging.info('...output directory is created...')
-    sys.stderr.write('output directory is:' + output_dir)
-
-    output = output_dir + f"eta_{str(eta).replace('.', 'p')}_seed_{seed}"
-    # int_output = output_dir + f"eta_{str(eta).replace('.', 'p')}_integral"
 
     # if args.traceType == 'sequential':
     #     if num_objectives < T:
@@ -140,30 +138,45 @@ if __name__ == "__main__":
     # GENERATE THE OCOPolicy OBJECT
     if args.policy == 'OGA':
         newPolicy = OGA(new_decision_set, new_objectives[0], eta)
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}/"
         logging.info("An OGA policy is generated.")
 
     elif args.policy == 'OMD':
         newPolicy = ShiftedNegativeEntropyOMD(new_decision_set, new_objectives[0], eta, gamma)
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}_gamma_{str(gamma).replace('.', 'p')}/"
         logging.info("A Shifted Negative Entropy Online Mirror Descent policy is generated.")
 
     elif args.policy == 'Meta':
         newPolicy = MetaPolicy(new_decision_set, new_objectives[0], eta)
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}/"
         logging.info("A Meta policy is generated.")
 
     elif args.policy == 'Optimistic':
         newPolicy = OptimisticPolicy(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}/"
         logging.info("An Optimistic policy is generated.")
 
     elif args.policy == 'Fixed':
         newPolicy = FixedShare(new_decision_set, new_objectives[0], eta, type(OCOPolicy))
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}/"
         logging.info("A fixed share policy is generated.")
 
     elif args.policy == 'FSF':
         newPolicy = FSF(new_decision_set, new_objectives[0], eta, gamma)
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}_gamma_{str(gamma).replace('.', 'p')}/"
         logging.info("An FSF policy is generated.")
 
     elif args.policy == 'OnlineTBG':
-        newPolicy = OnlineTBG(new_decision_set, new_objectives[0], n=n, eta=eta, n_colors=2)
+        n = new_objectives[0].params['n']
+        newPolicy = OnlineTBG(new_decision_set, new_objectives[0], n=n, eta=eta, n_colors=n_colors)
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}_n_colors_{n_colors}/"
         logging.info("An online TBG policy is generated.")
 
     elif args.policy == 'KKL':
@@ -189,7 +202,7 @@ if __name__ == "__main__":
         W = np.sqrt(m)  # ||w|| <= W
         R = np.sqrt(m)  # ||Phi(s)|| <= R
         alpha = 1 - 1 / math.e
-        delta = ((alpha + 1) * R**2) / T
+        delta = ((alpha + 1) * R ** 2) / T
         eta = ((alpha + 1) * R) / (W * np.sqrt(T))
 
         print(f" ===== KKL parameters  ====== ")
@@ -198,7 +211,7 @@ if __name__ == "__main__":
         print(f"delta = {delta}")
         print(f"W = {W}")
         print(f"R = {R}")
-        print(f"lambda = {delta / (4 * (alpha + 2)**2 * R**2)}")
+        print(f"lambda = {delta / (4 * (alpha + 2) ** 2 * R ** 2)}")
         print(f"KKL a-regret <= {(alpha + 1) * R * W / np.sqrt(T)}")
 
         # initialize online algorithm
@@ -206,6 +219,13 @@ if __name__ == "__main__":
 
         # initialize game
         game = Game(alg, mapping, ws, n, T)
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        logging.info('...output directory is created...')
+    sys.stderr.write('output directory is:' + output_dir)
+
+    output = output_dir + f"seed_{seed}"
 
     if args.policy != 'KKL':
         ## RUN THE OCOPolicy
@@ -222,22 +242,22 @@ if __name__ == "__main__":
         logging.info("The algorithm is finished.")
 
         newPolicy.objective = F  # new policy
-        # for _ in range(100):
-        newPolicy.step()
+        for _ in range(100):
+            newPolicy.step()
 
         opt_frac_reward = newPolicy.frac_rewards.pop()
         opt_int_reward = newPolicy.int_rewards.pop()
 
         # SAVE THE RESULTS OF THE OCOPolicy
-        final_frac_rewards = newPolicy.frac_rewards
-        final_int_rewards = newPolicy.int_rewards  # edit these
-        running_time = newPolicy.running_time
+        final_frac_rewards = newPolicy.frac_rewards[:T-1]
+        final_int_rewards = newPolicy.int_rewards[:T-1]
         print(f"frac rewards: {final_frac_rewards}")
         print(f"int rewards: {final_int_rewards}")
 
 
         def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
             return np.cumsum(rewards) / np.arange(1, args.T)
+
 
         cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
         cum_int_rewards = get_cum_avg_reward(final_int_rewards)
@@ -247,8 +267,7 @@ if __name__ == "__main__":
         save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
                       'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
                       'opt_int_reward': opt_int_reward})
-        # save(int_output, [cum_int_rewards, running_time, opt_int_reward])
-        logging.info("The rewards are saved to: " + output_dir + ".")
+        logging.info(f"The rewards are saved to: {output}.")
 
     if args.policy == 'KKL':
         game.play()
