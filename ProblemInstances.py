@@ -432,7 +432,7 @@ class TeamFormation(Problem):
             self.wdnf_dict[t] = self.wdnfs[t]
         
         self.thresholds = [self.convert_to_Thresholds(f) for f in functions]
-        self.frac_opt = [400] * self.problemSize
+        self.frac_opt = 400 if len(target_partitions) > 1 else 200 # optimal team of 4 (2) achieves reward 400 (200) per iteration
         
     def convert_to_WDNF(self, f):
         h, H = f
