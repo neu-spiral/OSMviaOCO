@@ -117,7 +117,11 @@ if __name__ == "__main__":
              newProblem)
 
     ### GENERATE THE ThresholdObjective OBJECTS
-    new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
+    if args.problemType != 'TF':
+        new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
+    if args.problemType == 'TF':
+        new_objectives = newProblem.thresholds
+    
     num_objectives = len(new_objectives)
     logging.info("ThresholdObjectives are generated.")
     # print(f"Threshold Objective: {new_objective.params}")
@@ -178,6 +182,10 @@ if __name__ == "__main__":
         output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
                      f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}_n_colors_{n_colors}/"
         logging.info("An online TBG policy is generated.")
+    
+    elif args.policy == 'Random':
+        newPolicy = OCOPolicy(new_decision_set, new_objectives[0], eta=eta)
+        logging.info("A Random policy (OCOPolicy) is generated.")
 
     elif args.policy == 'KKL':
         logging.info("A KKL policy is generated.")
@@ -245,8 +253,8 @@ if __name__ == "__main__":
         for _ in range(100):
             newPolicy.step()
 
-        opt_frac_reward = newPolicy.frac_rewards.pop()
-        opt_int_reward = newPolicy.int_rewards.pop()
+        # opt_frac_reward = newPolicy.frac_rewards.pop()
+        # opt_int_reward = newPolicy.int_rewards.pop()
 
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards[:T-1]
@@ -256,14 +264,14 @@ if __name__ == "__main__":
 
 
         def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
-            return np.cumsum(rewards) / np.arange(1, args.T)
+            return np.cumsum(rewards) / (np.arange(len(rewards)) + 1)
 
 
         cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
         cum_int_rewards = get_cum_avg_reward(final_int_rewards)
         print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
         print(f"cumulative averaged integral rewards: {cum_int_rewards}")
-
+        
         save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
                       'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
                       'opt_int_reward': opt_int_reward})

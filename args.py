@@ -13,7 +13,7 @@ def create_parser():
     parser.add_argument('--partitions', default=None,
                         help='Partitions file to generate constraints from')
     parser.add_argument('--policy', default='OGA', type=str, help='Type of the algorithm',
-                        choices=['OGA', 'OMD', 'Meta', 'Optimistic', 'Fixed', 'FSF', 'OnlineTBG', 'KKL'])  # policies
+                        choices=['OGA', 'OMD', 'Meta', 'Optimistic', 'Fixed', 'FSF', 'OnlineTBG', 'Random', 'KKL'])  # policies
     parser.add_argument('--eta', default=0.1, type=float, help='eta of the policy')
     parser.add_argument('--gamma', default=0.0, type=float, help='gamma of the policy')
     parser.add_argument('--n_colors', default=2, type=int,
