@@ -432,7 +432,8 @@ class TeamFormation(Problem):
             self.wdnf_dict[t] = self.wdnfs[t]
         
         self.thresholds = [self.convert_to_Thresholds(f) for f in functions]
-
+        self.frac_opt = [400] * self.problemSize
+        
     def convert_to_WDNF(self, f):
         h, H = f
         n = self.problemSize

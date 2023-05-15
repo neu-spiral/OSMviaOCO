@@ -90,7 +90,7 @@ if __name__ == "__main__":
             target_partitions = load(args.partitions)
             print(f"target partitions are: {target_partitions}")
             k_list = dict.fromkeys(target_partitions.keys(), args.k)
-            logging.info('...done. Defining a FacilityLocation Problem...')
+            logging.info('...done. Defining a TeamFormation Problem...')
             newProblem = TeamFormation(functions, k_list, target_partitions)
             cardinalities_k = list(k_list.values())
             print(f"constraints are: {cardinalities_k}")
@@ -109,7 +109,11 @@ if __name__ == "__main__":
              newProblem)
 
     ### GENERATE THE ThresholdObjective OBJECTS
-    new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
+    if args.problemType != 'TF':
+        new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
+    if args.problemType == 'TF':
+        new_objectives = newProblem.thresholds
+    
     num_objectives = len(new_objectives)
     logging.info("ThresholdObjectives are generated.")
     # print(f"Threshold Objective: {new_objective.params}")
@@ -122,7 +126,7 @@ if __name__ == "__main__":
         logging.info('...output directory is created...')
     sys.stderr.write('output directory is:' + output_dir)
 
-    output = output_dir + f"eta_{str(eta).replace('.', 'p')}_seed_{seed}"
+    output = output_dir + f"eta_{str(eta).replace('.', 'p')}"
     # int_output = output_dir + f"eta_{str(eta).replace('.', 'p')}_integral"
 
     # if args.traceType == 'sequential':
@@ -165,6 +169,10 @@ if __name__ == "__main__":
     elif args.policy == 'OnlineTBG':
         newPolicy = OnlineTBG(new_decision_set, new_objectives[0], n=n, eta=eta, n_colors=2)
         logging.info("An online TBG policy is generated.")
+    
+    elif args.policy == 'Random':
+        newPolicy = OCOPolicy(new_decision_set, new_objectives[0], eta=eta)
+        logging.info("A Random policy (OCOPolicy) is generated.")
 
     elif args.policy == 'KKL':
         logging.info("A KKL policy is generated.")
@@ -221,12 +229,12 @@ if __name__ == "__main__":
             running_time.append(time() - start)
         logging.info("The algorithm is finished.")
 
-        newPolicy.objective = F  # new policy
+        # newPolicy.objective = F  # new policy
         # for _ in range(100):
-        newPolicy.step()
+        # newPolicy.step()
 
-        opt_frac_reward = newPolicy.frac_rewards.pop()
-        opt_int_reward = newPolicy.int_rewards.pop()
+        # opt_frac_reward = newPolicy.frac_rewards.pop()
+        # opt_int_reward = newPolicy.int_rewards.pop()
 
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards
@@ -237,16 +245,17 @@ if __name__ == "__main__":
 
 
         def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
-            return np.cumsum(rewards) / np.arange(1, args.T)
+            return np.cumsum(rewards) / (np.arange(len(rewards)) + 1)
 
         cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
         cum_int_rewards = get_cum_avg_reward(final_int_rewards)
         print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
         print(f"cumulative averaged integral rewards: {cum_int_rewards}")
+        
 
         save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
-                      'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
-                      'opt_int_reward': opt_int_reward})
+                      'running_time': running_time}) # 'opt_frac_reward': opt_frac_reward,
+                      #'opt_int_reward': opt_int_reward})
         # save(int_output, [cum_int_rewards, running_time, opt_int_reward])
         logging.info("The rewards are saved to: " + output_dir + ".")
 
