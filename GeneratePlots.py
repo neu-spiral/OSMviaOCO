@@ -53,6 +53,7 @@ if __name__ == "__main__":
             int_opts = []
             for f in files[root]:
                 result = load(os.path.join(root, f))
+
                 frac_rewards.append(result['cum_frac_rewards'])
                 int_rewards.append(result['cum_int_rewards'])
                 running_time.append(result['running_time'])
@@ -123,6 +124,7 @@ if __name__ == "__main__":
             my_color = next(colors)
             print(f"F_opt is {max(frac_opts_per_eta):.3f}")
             plt.axhline(y=max(frac_opts_per_eta), color=my_color, linestyle='-', label=f"fractional optimum")
+
             plt.ylabel("rewards")
             ax = plt.gca()
             handles, labels = ax.get_legend_handles_labels()

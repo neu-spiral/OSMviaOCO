@@ -181,52 +181,12 @@ if __name__ == "__main__":
         newPolicy = OnlineTBG(new_decision_set, new_objectives[0], n=n, eta=eta, n_colors=n_colors)
         output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
                      f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}_n_colors_{n_colors}/"
+
         logging.info("An online TBG policy is generated.")
     
     elif args.policy == 'Random':
         newPolicy = OCOPolicy(new_decision_set, new_objectives[0], eta=eta)
         logging.info("A Random policy (OCOPolicy) is generated.")
-
-    elif args.policy == 'KKL':
-        logging.info("A KKL policy is generated.")
-        translator = Translator(newProblem)
-        ws = translator.ws
-        n = translator.n  # dimension of action s
-        m = translator.m  # dimension of Phi(s)
-        T = translator.T  # horizon
-        sign = translator.sign  # sign used in the wdnf functions
-        index_to_set = translator.index_to_set
-        ground_set = newProblem.groundSet
-
-        mapping = WDNFMapping(n, index_to_set, sign)
-        linear_solver = newProblem.get_solver()
-        initial_point = newProblem.get_initial_point()
-        approx_alg = ApproxGreedy(linear_solver, mapping, initial_point, n, args.KKLalg, args.setting)
-
-        for w in ws:
-            assert np.all(w >= 0), "w not positive"
-
-        # set constants
-        W = np.sqrt(m)  # ||w|| <= W
-        R = np.sqrt(m)  # ||Phi(s)|| <= R
-        alpha = 1 - 1 / math.e
-        delta = ((alpha + 1) * R ** 2) / T
-        eta = ((alpha + 1) * R) / (W * np.sqrt(T))
-
-        print(f" ===== KKL parameters  ====== ")
-        print(f"alpha (approx ratio) = {alpha}")
-        print(f"eta = {eta}")
-        print(f"delta = {delta}")
-        print(f"W = {W}")
-        print(f"R = {R}")
-        print(f"lambda = {delta / (4 * (alpha + 2) ** 2 * R ** 2)}")
-        print(f"KKL a-regret <= {(alpha + 1) * R * W / np.sqrt(T)}")
-
-        # initialize online algorithm
-        alg = KKL(approx_alg, mapping, alpha, delta, eta, R, n)
-
-        # initialize game
-        game = Game(alg, mapping, ws, n, T)
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -235,51 +195,46 @@ if __name__ == "__main__":
 
     output = output_dir + f"seed_{seed}"
 
-    if args.policy != 'KKL':
-        ## RUN THE OCOPolicy
-        np.random.seed(seed)
-        running_time = []
-        start = time()
-        while newPolicy.current_iteration < args.T:
-            # TODO design backups if the algorithm is interrupted
-            i = newPolicy.current_iteration
-            logging.info(f"Running iteration #{i}...\n")
-            newPolicy.objective = new_objectives[i]
-            newPolicy.step()
-            running_time.append(time() - start)
-        logging.info("The algorithm is finished.")
 
-        newPolicy.objective = F  # new policy
-        for _ in range(100):
-            newPolicy.step()
-
-        opt_frac_reward = newPolicy.frac_rewards.pop()
-        opt_int_reward = newPolicy.int_rewards.pop()
-
-        # SAVE THE RESULTS OF THE OCOPolicy
-        final_frac_rewards = newPolicy.frac_rewards[:T-1]
-        final_int_rewards = newPolicy.int_rewards[:T-1]
-        print(f"frac rewards: {final_frac_rewards}")
-        print(f"int rewards: {final_int_rewards}")
+    ## RUN THE OCOPolicy
+    np.random.seed(seed)
+    running_time = []
+    start = time()
+    while newPolicy.current_iteration < args.T:
+        # TODO design backups if the algorithm is interrupted
+        i = newPolicy.current_iteration
+        logging.info(f"Running iteration #{i}...\n")  ## TODO format string
+        newPolicy.objective = new_objectives[i]
+        newPolicy.step()
+        running_time.append(time() - start)
+    logging.info("The algorithm is finished.")
 
 
-        def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
-            return np.cumsum(rewards) / (np.arange(len(rewards)) + 1)
+    newPolicy.objective = F  # new policy
+    for _ in range(100):
+        newPolicy.step()
 
 
-        cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
-        cum_int_rewards = get_cum_avg_reward(final_int_rewards)
-        print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
-        print(f"cumulative averaged integral rewards: {cum_int_rewards}")
-        
-        save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
-                      'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
-                      'opt_int_reward': opt_int_reward})
-        logging.info(f"The rewards are saved to: {output}.")
+    opt_frac_reward = newPolicy.frac_rewards.pop()
+    opt_int_reward = newPolicy.int_rewards.pop()
 
-    if args.policy == 'KKL':
-        game.play()
-        cum_avg_reward = game.get_cum_avg_reward()
-        print(f"cum_avg_reward: {cum_avg_reward}")
-        save(frac_output, cum_avg_reward)
-        logging.info("The rewards are saved to: " + output_dir + ".")
+    # SAVE THE RESULTS OF THE OCOPolicy
+    final_frac_rewards = newPolicy.frac_rewards[:T-1]
+    final_int_rewards = newPolicy.int_rewards[:T-1]
+    print(f"frac rewards: {final_frac_rewards}")
+    print(f"int rewards: {final_int_rewards}")
+    running_time = newPolicy.running_time
+
+    def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
+        return np.cumsum(rewards) / (np.arange(len(rewards)) + 1)
+
+
+    cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
+    cum_int_rewards = get_cum_avg_reward(final_int_rewards)
+    # print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
+    
+    save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
+                    'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
+                    'opt_int_reward': opt_int_reward})
+    logging.info(f"The rewards are saved to: {output}.")
+
