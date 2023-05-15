@@ -148,9 +148,9 @@ class Problem(object):
         n = self.problemSize
         # sys.stderr.write('n: ' + str(n) + '\n')
         threshold_objectives = []
-        # C = range(len(self.wdnf_dict))
-        sign = self.wdnf_dict[0].sign
-        F = WDNF(dict(), sign)
+        C = range(len(self.wdnf_dict))
+        # sign = self.wdnf_dict[0].sign
+        F = WDNF(dict(), -1)
         for graph in self.wdnf_dict:
             params = dict()
             params['n'] = n
@@ -168,7 +168,7 @@ class Problem(object):
             # sys.stderr.write('S: ' + str(list(wdnfs.keys())) + '\n')
             params['S'] = [list(key) for key in list(wdnf.keys())]
             # sys.stderr.write('c: ' + str(list(wdnfs.values())) + '\n')
-            params['c'] = [sign * value for value in list(wdnf.values())]
+            params['c'] = [-1 * value for value in list(wdnf.values())]
             # extensive tests
             # y = dict.fromkeys(self.groundSet, 0.0)
             # for _ in range(100):

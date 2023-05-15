@@ -243,7 +243,7 @@ if __name__ == "__main__":
         while newPolicy.current_iteration < args.T:
             # TODO design backups if the algorithm is interrupted
             i = newPolicy.current_iteration
-            logging.info(f"Running iteration #{i}...\n")  ## TODO format string
+            logging.info(f"Running iteration #{i}...\n")
             newPolicy.objective = new_objectives[i]
             newPolicy.step()
             running_time.append(time() - start)
@@ -253,8 +253,8 @@ if __name__ == "__main__":
         for _ in range(100):
             newPolicy.step()
 
-        # opt_frac_reward = newPolicy.frac_rewards.pop()
-        # opt_int_reward = newPolicy.int_rewards.pop()
+        opt_frac_reward = newPolicy.frac_rewards.pop()
+        opt_int_reward = newPolicy.int_rewards.pop()
 
         # SAVE THE RESULTS OF THE OCOPolicy
         final_frac_rewards = newPolicy.frac_rewards[:T-1]
