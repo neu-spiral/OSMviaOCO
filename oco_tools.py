@@ -362,6 +362,8 @@ class OnlineTBG(OCOPolicy):
                     feedback[item] = self.objective.eval(A)
                 self.experts[(slot, c)].step(supergradient=feedback)
 
+
+
     def sample(self, global_action, c_vec):
         G = {}
         for slot, color in global_action:
@@ -370,7 +372,7 @@ class OnlineTBG(OCOPolicy):
         G_vec = np.zeros(self.n)
         for slot in G:
             G_vec[G[slot]] = 1
-        G_vec[~np.isin(np.arange(self.decision_set.n), decision_set.support)] =1
+        # G_vec[~np.isin(np.arange(self.decision_set.n), decision_set.support)] =1
         return G, G_vec
 
 
@@ -440,25 +442,21 @@ if __name__ == "__main__":
     # Generate coverage example
     objectives = generate_non_stationary_problem()
     n = objectives[0].n
-    decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[2, 1, 2,3], sets_S=[[1,2,3,4], [5,6], [7,8,9], list(range(10,20,1))])
+    decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[2, 1, 2,3], sets_S=[[0, 1,2,3,4], [5,6], [7,8,9], list(range(10,20,1))])
     # decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[5], sets_S=[list(range(0,20,1))])
-
-    policyTBG = OnlineTBG(decision_set=decision_set,objective=objectives[0], eta=1, n_colors=1)
+    policyTBG = OnlineTBG(decision_set=decision_set,objective=objectives[0], eta=.01, n_colors=10)
     policyFSF = FSF(decision_set=decision_set,objective=objectives[0], eta=.05, gamma = .001)
     policyOMD = ShiftedNegativeEntropyOMD(decision_set=decision_set,objective=objectives[0], eta=.01, gamma=0.0)
-    # policyShiftedOMD = ShiftedNegativeEntropyOMD(decision_set=decision_set, objective=objectives[0], eta=.05, gamma=0.02)
     policyOGA = OGA(decision_set=decision_set, objective=objectives[0], eta=.001)
     def run_non_stationary_exp(policy, name, T_half = 100):
         for t in range(T_half):
             policy.step()
-            print(policyTBG.decision, sum(policyTBG.decision))
-
-        plt.plot(taverage(policy.frac_rewards), label = name)
+        plt.plot(taverage(policy.int_rewards), label = name)
     # run_non_stationary_exp(policyOMD, 'OMD')
     # run_non_stationary_exp(policyShiftedOMD, 'SOMD')
-    # run_non_stationary_exp(policyOGA, 'OGA')
+    run_non_stationary_exp(policyOGA, 'OGA')
     run_non_stationary_exp(policyTBG, 'TBG')
-    # run_non_stationary_exp(policyFSF, 'FSF')
+    run_non_stationary_exp(policyFSF, 'FSF')
     plt.plot([0,100], [objectives[0].get_opt(decision_set)[0]]*2, linestyle = '--', color = 'black')
     plt.legend()
     plt.show()
