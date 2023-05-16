@@ -37,7 +37,7 @@ class ThresholdObjective:
         for k, v in params.items():
             setattr(self, k, v)  # Refresh the parameters
 
-    def eval(self, x):
+    def eval(self, x):   # write cvxpy version of this
         x = np.array(x)
         obj = 0
         for i in self.C:

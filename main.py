@@ -51,8 +51,8 @@ if __name__ == "__main__":
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
                 constraints = 'partition_matroid'
             else:
-                target_partitions = None
-                k_list = [args.k]
+                target_partitions = {0: set(n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0)}
+                k_list = {0: args.k}
                 constraints = 'cardinality'
             logging.info('...done. Defining a FacilityLocation Problem...')
             newProblem = FacilityLocation(bipartite_graph, k_list, target_partitions)
@@ -79,8 +79,8 @@ if __name__ == "__main__":
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
                 constraints = 'partition_matroid'
             else:
-                target_partitions = None
-                k_list = [args.k]
+                target_partitions = {0: set(graphs[0].nodes())}
+                k_list = {0: args.k}
                 constraints = 'cardinality'
             logging.info('...done. Just loaded %d cascades.' % (len(graphs)))
             logging.info('Defining an InfluenceMaximization problem...')
@@ -195,6 +195,56 @@ if __name__ == "__main__":
 
     output = output_dir + f"seed_{seed}"
 
+    if args.policy != 'KKL':
+        ## RUN THE OCOPolicy
+        np.random.seed(seed)
+        running_time = []
+        start = time()
+        while newPolicy.current_iteration < args.T:
+            # TODO design backups if the algorithm is interrupted
+            i = newPolicy.current_iteration
+            logging.info(f"Running iteration #{i}...\n")
+            newPolicy.objective = new_objectives[i]
+            newPolicy.step()
+            running_time.append(time() - start)
+        logging.info("The algorithm is finished.")
+
+        newPolicy.objective = F  # new policy
+        for _ in range(100):
+            newPolicy.step()
+
+        # find the solution using cvxpy
+
+        opt_frac_reward = newPolicy.frac_rewards.pop()
+        opt_int_reward = newPolicy.int_rewards.pop()
+
+        # SAVE THE RESULTS OF THE OCOPolicy
+        final_frac_rewards = newPolicy.frac_rewards[:T-1]
+        final_int_rewards = newPolicy.int_rewards[:T-1]
+        print(f"frac rewards: {final_frac_rewards}")
+        print(f"int rewards: {final_int_rewards}")
+
+
+        def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
+            return np.cumsum(rewards) / (np.arange(len(rewards)) + 1)
+
+
+        cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
+        cum_int_rewards = get_cum_avg_reward(final_int_rewards)
+        print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
+        print(f"cumulative averaged integral rewards: {cum_int_rewards}")
+        
+        save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
+                      'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
+                      'opt_int_reward': opt_int_reward})
+        logging.info(f"The rewards are saved to: {output}.")
+
+    if args.policy == 'KKL':
+        game.play()
+        cum_avg_reward = game.get_cum_avg_reward()
+        print(f"cum_avg_reward: {cum_avg_reward}")
+        save(frac_output, cum_avg_reward)
+        logging.info("The rewards are saved to: " + output_dir + ".")
 
     ## RUN THE OCOPolicy
     np.random.seed(seed)
@@ -237,4 +287,3 @@ if __name__ == "__main__":
                     'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
                     'opt_int_reward': opt_int_reward})
     logging.info(f"The rewards are saved to: {output}.")
-
