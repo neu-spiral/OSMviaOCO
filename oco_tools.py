@@ -132,7 +132,7 @@ class OCOPolicy:
         self.decisions = []
         self.int_decisions = []
         self.running_time = []
-        self.current_iteration = 1
+        self.current_iteration = 0
         if isinstance(decision_set, RelaxedPartitionMatroid):
             self.decision = np.ones  (decision_set.n)
             for S, k in zip(decision_set.sets_S, decision_set.cardinalities_k):
