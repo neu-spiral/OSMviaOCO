@@ -358,7 +358,7 @@ class OnlineTBG(OCOPolicy):
                 feedback = np.zeros(len(self.items[slot]))
                 for item in range(len(self.items[slot])):
                     A = np.copy(sampled_Gp_vec)
-                    A[item] = 1
+                    A[self.items[slot][item]] = 1
                     feedback[item] = self.objective.eval(A)
                 self.experts[(slot, c)].step(supergradient=feedback)
 
@@ -442,7 +442,7 @@ if __name__ == "__main__":
     # Generate coverage example
     objectives = generate_non_stationary_problem()
     n = objectives[0].n
-    decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[2, 1, 2,3], sets_S=[[0, 1,2,3,4], [5,6], [7,8,9], list(range(10,20,1))])
+    decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[2, 1, 2,3], sets_S=[ list(range(10,20,1)),[0, 1,2,3,4], [5,6], [7,8,9]])
     # decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[5], sets_S=[list(range(0,20,1))])
     policyTBG = OnlineTBG(decision_set=decision_set,objective=objectives[0], eta=.01, n_colors=10)
     policyFSF = FSF(decision_set=decision_set,objective=objectives[0], eta=.05, gamma = .001)
