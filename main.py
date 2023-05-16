@@ -51,8 +51,8 @@ if __name__ == "__main__":
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
                 constraints = 'partition_matroid'
             else:
-                target_partitions = None
-                k_list = [args.k]
+                target_partitions = {0: set(n for n, d in bipartite_graph.nodes(data=True) if d['bipartite'] == 0)}
+                k_list = {0: args.k}
                 constraints = 'cardinality'
             logging.info('...done. Defining a FacilityLocation Problem...')
             newProblem = FacilityLocation(bipartite_graph, k_list, target_partitions)
@@ -79,8 +79,8 @@ if __name__ == "__main__":
                 k_list = dict.fromkeys(target_partitions.keys(), args.k)
                 constraints = 'partition_matroid'
             else:
-                target_partitions = None
-                k_list = [args.k]
+                target_partitions = {0: set(graphs[0].nodes())}
+                k_list = {0: args.k}
                 constraints = 'cardinality'
             logging.info('...done. Just loaded %d cascades.' % (len(graphs)))
             logging.info('Defining an InfluenceMaximization problem...')
@@ -252,6 +252,8 @@ if __name__ == "__main__":
         newPolicy.objective = F  # new policy
         for _ in range(100):
             newPolicy.step()
+
+        # find the solution using cvxpy
 
         opt_frac_reward = newPolicy.frac_rewards.pop()
         opt_int_reward = newPolicy.int_rewards.pop()

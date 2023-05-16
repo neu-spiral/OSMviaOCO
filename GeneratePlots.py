@@ -96,8 +96,8 @@ if __name__ == "__main__":
         # print(f"plots are {plots}")
         for output_dir in plots:
             print(output_dir)
-            jet = plt.get_cmap('tab10')
-            colors = iter(jet(np.linspace(0, 1, 50)))
+            jet = plt.get_cmap('tab20')
+            colors = iter(jet(np.linspace(0, 1, 20)))
             frac_opts_per_eta = []
             for pair in plots[output_dir]:
                 # print(f"eta is {eta}")
@@ -116,8 +116,9 @@ if __name__ == "__main__":
                          [t3, result['avg_frac_rewards'][t3], result['std_frac_rewards'][t3], eta, gamma]
                          ]
                 print(tabulate(table, headers=headers))  # , floatfmt=".3f"))
+                my_label = f"eta={eta}, gamma={gamma}, fractional" if gamma is not None else f"eta={eta}, fractional"
                 plt.plot(range(T), result['avg_frac_rewards'],
-                         label=f"eta={eta}, gamma={gamma}, fractional", linestyle='dashed', color=my_color)
+                         label=my_label, linestyle='dashed', color=my_color)
                 # plt.plot(range(len(result['avg_int_rewards'])), result['avg_int_rewards'],
                 #          label=f"eta={eta}, gamma={gamma}, integral", linestyle='solid', color=my_color)
             my_color = next(colors)
@@ -129,6 +130,7 @@ if __name__ == "__main__":
             # sort both labels and handles by labels
             labels, handles = zip(*sorted(zip(labels, handles), key=lambda l: l[0]))
             ax.legend(handles, labels)
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
             plt.show()
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
