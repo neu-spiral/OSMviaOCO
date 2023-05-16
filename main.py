@@ -2,11 +2,6 @@ from helpers import save, load
 from ProblemInstances import InfluenceMaximization, FacilityLocation, TeamFormation
 from oco_tools import ThresholdObjective, ZeroOneDecisionSet, RelaxedPartitionMatroid, OGA, OCOPolicy, \
     ShiftedNegativeEntropyOMD, MetaPolicy, OptimisticPolicy, FixedShare, FSF, OnlineTBG
-from KKL.translate import Translator
-from KKL.mapping import WDNFMapping, IdentityMapping
-from KKL.offline_alg import ApproxGreedy, ApproxAlgInterval
-from KKL.online_alg import KKL
-from KKL.game import Game
 
 from time import time
 import args
@@ -32,7 +27,7 @@ if __name__ == "__main__":
     T = args.T
     logging.basicConfig(level=logging.INFO)
 
-    ### LOAD OR GENERATE THE PROBLEM INSTANCE
+    # LOAD OR GENERATE THE PROBLEM INSTANCE
     # use here if the problem instance has already been created
     if args.problem is not None:
         newProblem = load(args.problem)
@@ -57,10 +52,10 @@ if __name__ == "__main__":
             logging.info('...done. Defining a FacilityLocation Problem...')
             newProblem = FacilityLocation(bipartite_graph, k_list, target_partitions)
             cardinalities_k = list(k_list.values())
-            print(f"constraints are: {cardinalities_k}")
+            # print(f"constraints are: {cardinalities_k}")
             sets_S = list(target_partitions.values())
             sets_S = [list(sets_S[i]) for i in range(len(sets_S))]
-            print(f"sets are: {sets_S}")
+            # print(f"sets are: {sets_S}")
             new_decision_set = RelaxedPartitionMatroid(newProblem.problemSize, cardinalities_k, sets_S)
             # make sure the k_list and target_partitions
             # formats fit to cardinalities_k, sets_S format
@@ -116,16 +111,15 @@ if __name__ == "__main__":
         save(problem_dir + args.problemType + "_" + args.input.split("/")[-1] + "_k_" + str(args.k),
              newProblem)
 
-    ### GENERATE THE ThresholdObjective OBJECTS
+    # GENERATE THE ThresholdObjective OBJECTS
     if args.problemType != 'TF':
         new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
     if args.problemType == 'TF':
         new_objectives = newProblem.thresholds
-    
+
     num_objectives = len(new_objectives)
     logging.info("ThresholdObjectives are generated.")
     # print(f"Threshold Objective: {new_objective.params}")
-
 
     # if args.traceType == 'sequential':
     #     if num_objectives < T:
@@ -177,15 +171,15 @@ if __name__ == "__main__":
         logging.info("An FSF policy is generated.")
 
     elif args.policy == 'OnlineTBG':
-        n = new_objectives[0].params['n']
-        newPolicy = OnlineTBG(new_decision_set, new_objectives[0], n=n, eta=eta, n_colors=n_colors)
+        newPolicy = OnlineTBG(new_decision_set, new_objectives[0], eta=eta, n_colors=n_colors)
         output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
                      f"k_{args.k}_{args.T}_iter/eta_{str(eta).replace('.', 'p')}_n_colors_{n_colors}/"
-
         logging.info("An online TBG policy is generated.")
-    
+
     elif args.policy == 'Random':
         newPolicy = OCOPolicy(new_decision_set, new_objectives[0], eta=eta)
+        output_dir = f"results/{args.policy}/{args.problemType}/{args.input.split('/')[-1]}/{constraints}/" \
+                     f"k_{args.k}_{args.T}_iter/"
         logging.info("A Random policy (OCOPolicy) is generated.")
 
     if not os.path.exists(output_dir):
@@ -195,85 +189,29 @@ if __name__ == "__main__":
 
     output = output_dir + f"seed_{seed}"
 
-    if args.policy != 'KKL':
-        ## RUN THE OCOPolicy
-        np.random.seed(seed)
-        running_time = []
-        start = time()
-        while newPolicy.current_iteration < args.T:
-            # TODO design backups if the algorithm is interrupted
-            i = newPolicy.current_iteration
-            logging.info(f"Running iteration #{i}...\n")
-            newPolicy.objective = new_objectives[i]
-            newPolicy.step()
-            running_time.append(time() - start)
-        logging.info("The algorithm is finished.")
-
-        newPolicy.objective = F  # new policy
-        for _ in range(100):
-            newPolicy.step()
-
-        # find the solution using cvxpy
-
-        opt_frac_reward = newPolicy.frac_rewards.pop()
-        opt_int_reward = newPolicy.int_rewards.pop()
-
-        # SAVE THE RESULTS OF THE OCOPolicy
-        final_frac_rewards = newPolicy.frac_rewards[:T-1]
-        final_int_rewards = newPolicy.int_rewards[:T-1]
-        print(f"frac rewards: {final_frac_rewards}")
-        print(f"int rewards: {final_int_rewards}")
-
-
-        def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
-            return np.cumsum(rewards) / (np.arange(len(rewards)) + 1)
-
-
-        cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
-        cum_int_rewards = get_cum_avg_reward(final_int_rewards)
-        print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
-        print(f"cumulative averaged integral rewards: {cum_int_rewards}")
-        
-        save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
-                      'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
-                      'opt_int_reward': opt_int_reward})
-        logging.info(f"The rewards are saved to: {output}.")
-
-    if args.policy == 'KKL':
-        game.play()
-        cum_avg_reward = game.get_cum_avg_reward()
-        print(f"cum_avg_reward: {cum_avg_reward}")
-        save(frac_output, cum_avg_reward)
-        logging.info("The rewards are saved to: " + output_dir + ".")
-
-    ## RUN THE OCOPolicy
+    # RUN THE OCOPolicy
     np.random.seed(seed)
     running_time = []
     start = time()
     while newPolicy.current_iteration < args.T:
         # TODO design backups if the algorithm is interrupted
         i = newPolicy.current_iteration
-        logging.info(f"Running iteration #{i}...\n")  ## TODO format string
+        logging.info(f"Running iteration #{i}...\n")
         newPolicy.objective = new_objectives[i]
         newPolicy.step()
         running_time.append(time() - start)
     logging.info("The algorithm is finished.")
 
-
-    newPolicy.objective = F  # new policy
-    for _ in range(100):
-        newPolicy.step()
-
-
-    opt_frac_reward = newPolicy.frac_rewards.pop()
-    opt_int_reward = newPolicy.int_rewards.pop()
+    #  find the solution using cvxpy
+    opt_frac_reward, opt = F.get_opt(new_decision_set)
+    print(f"optimum fractional reward is {opt_frac_reward}")
 
     # SAVE THE RESULTS OF THE OCOPolicy
-    final_frac_rewards = newPolicy.frac_rewards[:T-1]
-    final_int_rewards = newPolicy.int_rewards[:T-1]
+    final_frac_rewards = np.array(newPolicy.frac_rewards)
+    final_int_rewards = np.array(newPolicy.int_rewards)
     print(f"frac rewards: {final_frac_rewards}")
     print(f"int rewards: {final_int_rewards}")
-    running_time = newPolicy.running_time
+
 
     def get_cum_avg_reward(rewards: np.ndarray) -> np.ndarray:
         return np.cumsum(rewards) / (np.arange(len(rewards)) + 1)
@@ -281,9 +219,9 @@ if __name__ == "__main__":
 
     cum_frac_rewards = get_cum_avg_reward(final_frac_rewards)
     cum_int_rewards = get_cum_avg_reward(final_int_rewards)
-    # print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
-    
+    print(f"cumulative averaged fractional rewards: {cum_frac_rewards}")
+    print(f"cumulative averaged integral rewards: {cum_int_rewards}")
+
     save(output, {'cum_frac_rewards': cum_frac_rewards, 'cum_int_rewards': cum_int_rewards,
-                    'running_time': running_time, 'opt_frac_reward': opt_frac_reward,
-                    'opt_int_reward': opt_int_reward})
+                  'running_time': running_time, 'opt_frac_reward': opt_frac_reward})
     logging.info(f"The rewards are saved to: {output}.")

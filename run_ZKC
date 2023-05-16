@@ -1,9 +1,12 @@
 #!/bin/bash
 
-for eta in 2 4 6 8
+for eta in 2.5
 do
-    for seed in 4 8 15 16 23
+    for gamma in 0.0
     do
-        sbatch test_ZKC $eta $seed
+        for seed in 4 8 15 16 23
+        do
+            sbatch test_ZKC $eta $gamma $seed
+        done
     done
 done

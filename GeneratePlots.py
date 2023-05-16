@@ -56,9 +56,8 @@ if __name__ == "__main__":
 
                 frac_rewards.append(result['cum_frac_rewards'])
                 int_rewards.append(result['cum_int_rewards'])
-                running_time.append(result['running_time'])
+                running_time.append(np.array(result['running_time']))
                 frac_opts.append(result['opt_frac_reward'])
-                int_opts.append(result['opt_int_reward'])
 
             dir_name = root.split('/')[-1]
             output_dir = root.replace('results', 'plots').replace(f"/{dir_name}", '')
@@ -98,7 +97,7 @@ if __name__ == "__main__":
         for output_dir in plots:
             print(output_dir)
             jet = plt.get_cmap('tab20')
-            colors = iter(jet(np.linspace(0, 1, 20)))
+            colors = iter(jet(np.linspace(0, 1, 40)))
             frac_opts_per_eta = []
             for pair in plots[output_dir]:
                 # print(f"eta is {eta}")

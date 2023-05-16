@@ -10,8 +10,8 @@
 
 #SBATCH --constraint=broadwell
 
-#SBATCH --output=slurm_logs/IM_ZKC_OGA%j.out
+#SBATCH --output=slurm_logs/IM_ZKC_OGA_part_%j.out
 
-#SBATCH --error=slurm_logs/IM_ZKC_OGA%j.err
+#SBATCH --error=slurm_logs/IM_ZKC_OGA_part_%j.err
 
-srun python main.py --problemType IM --input datasets/ZKC_100_01_42 --policy OGA --eta $1 --k 4 --seed $2 --T 100
+srun python main.py --problemType IM --input datasets/ZKC_100_01_42 --partitions datasets/ZKC_100_01_42_partitions --policy OGA --eta $1 --gamma $2 --k 2 --seed $3 --T 100

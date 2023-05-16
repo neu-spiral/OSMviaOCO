@@ -4,14 +4,14 @@
 
 #SBATCH --time=23:00:00
 
-#SBATCH --job-name='FL_MovieLens_OMD_part'
+#SBATCH --job-name='FL_MovieLens_OGA_part'
 
 #SBATCH --partition=short
 
 #SBATCH --constraint=broadwell
 
-#SBATCH --output=slurm_logs/FL_movielens_OMD_part_%j.out
+#SBATCH --output=slurm_logs/FL_movielens_OGA_part_%j.out
 
-#SBATCH --error=slurm_logs/FL_movielens_OMD_part_%j.err
+#SBATCH --error=slurm_logs/FL_movielens_OGA_part_%j.err
 
-srun python main.py --problemType FL --input datasets/MovieLens_294_users_21_movies --partitions datasets/MovieLens_294_users_21_movies_partitions --policy OMD --eta $1 --k 1 --gamma $2 --seed $3 --T 294
+srun python main.py --problemType FL --input datasets/MovieLens_294_users_21_movies --partitions datasets/MovieLens_294_users_21_movies_partitions --policy OGA --eta $1 --k 1 --gamma $2 --seed $3 --T 294

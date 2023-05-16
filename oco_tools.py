@@ -12,6 +12,7 @@ import numpy as np
 from functools import reduce
 from operator import concat
 
+
 class ThresholdObjective:
     def __init__(self, params):
         """Params format:
@@ -37,13 +38,14 @@ class ThresholdObjective:
         for k, v in params.items():
             setattr(self, k, v)  # Refresh the parameters
 
-    def eval(self, x):   # write cvxpy version of this
+    def eval(self, x):
         x = np.array(x)
         obj = 0
         for i in self.C:
             w = np.array(self.w[i])
             obj += self.c[i] * np.min([sum(x[self.S[i]] * w[self.S[i]]), self.b[i]])
         return obj  # Evaluate the function
+
     def get_opt(self, decision_set):
         x = decision_set.x
         obj = 0
@@ -53,7 +55,6 @@ class ThresholdObjective:
         problem = cp.Problem(cp.Maximize(obj), constraints=decision_set.constraints)
         problem.solve()
         return obj.value, x.value
-
 
     def supergradient(self, x):
         x = np.array(x)
@@ -121,6 +122,7 @@ class RelaxedPartitionMatroid(ZeroOneDecisionSet):
         # and inherit functionality from [0, 1] decision set
         self.support = np.unique(reduce(concat, sets_S))
 
+
 class OCOPolicy:
     def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float):
         self.eta = eta
@@ -131,10 +133,9 @@ class OCOPolicy:
         self.decision = np.ones(decision_set.n)
         self.decisions = []
         self.int_decisions = []
-        self.running_time = []
         self.current_iteration = 0
         if isinstance(decision_set, RelaxedPartitionMatroid):
-            self.decision = np.ones  (decision_set.n)
+            self.decision = np.ones(decision_set.n)
             for S, k in zip(decision_set.sets_S, decision_set.cardinalities_k):
                 self.decision[S] = k / len(S)
             self.decision = self.decision_set.project_euclidean(self.decision)
@@ -150,11 +151,10 @@ class OCOPolicy:
         int_decision = self.round(self.decision)
         self.int_decisions.append(int_decision)
         int_reward = self.objective.eval(int_decision)
-        
+
         self.frac_rewards.append(frac_reward)  # Collect value of fractional reward
         self.int_rewards.append(int_reward)  # Collect value of integral reward
         self.current_iteration += 1
-        self.running_time.append(time() - start)
 
     def round(self, x):
         if isinstance(self.decision_set, RelaxedPartitionMatroid):
@@ -201,6 +201,7 @@ class ShiftedNegativeEntropyOMD(OCOPolicy):
             eta * supergradient) - self.gamma
         # self.decision =  self.decision_set.project_bregman(self.decision_z)  # Take gradient step
         self.decision = self.decision_set.project_euclidean(self.decision_z)
+
 
 class MetaPolicy(OCOPolicy):
     def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, Policy: Type[OCOPolicy],
@@ -317,13 +318,13 @@ class FSF(OCOPolicy):
 
 
 class OnlineTBG(OCOPolicy):
-    def __init__(self,decision_set:ZeroOneDecisionSet,  objective: ThresholdObjective, eta: float, n_colors: int):
+    def __init__(self, decision_set: ZeroOneDecisionSet, objective: ThresholdObjective, eta: float, n_colors: int):
         super().__init__(decision_set, objective, eta)
         # self.experts = {}
         self.experts = {}
         self.items = []
         for i, k in enumerate(decision_set.cardinalities_k):
-            self.items.extend([decision_set.sets_S[i]]*k)
+            self.items.extend([decision_set.sets_S[i]] * k)
         self.n_slots = sum(decision_set.cardinalities_k)
         self.n_colors = n_colors
         self.n = self.decision_set.n
@@ -370,7 +371,7 @@ class OnlineTBG(OCOPolicy):
         G_vec = np.zeros(self.n)
         for slot in G:
             G_vec[G[slot]] = 1
-        G_vec[~np.isin(np.arange(self.decision_set.n), decision_set.support)] =1
+        G_vec[~np.isin(np.arange(self.decision_set.n), decision_set.support)] = 1
         return G, G_vec
 
 
@@ -440,26 +441,31 @@ if __name__ == "__main__":
     # Generate coverage example
     objectives = generate_non_stationary_problem()
     n = objectives[0].n
-    decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[2, 1, 2,3], sets_S=[[1,2,3,4], [5,6], [7,8,9], list(range(10,20,1))])
+    decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[2, 1, 2, 3],
+                                           sets_S=[[1, 2, 3, 4], [5, 6], [7, 8, 9], list(range(10, 20, 1))])
     # decision_set = RelaxedPartitionMatroid(n, cardinalities_k=[5], sets_S=[list(range(0,20,1))])
 
-    policyTBG = OnlineTBG(decision_set=decision_set,objective=objectives[0], eta=1, n_colors=1)
-    policyFSF = FSF(decision_set=decision_set,objective=objectives[0], eta=.05, gamma = .001)
-    policyOMD = ShiftedNegativeEntropyOMD(decision_set=decision_set,objective=objectives[0], eta=.01, gamma=0.0)
+    policyTBG = OnlineTBG(decision_set=decision_set, objective=objectives[0], eta=1, n_colors=1)
+    policyFSF = FSF(decision_set=decision_set, objective=objectives[0], eta=.05, gamma=.001)
+    policyOMD = ShiftedNegativeEntropyOMD(decision_set=decision_set, objective=objectives[0], eta=.01, gamma=0.0)
     # policyShiftedOMD = ShiftedNegativeEntropyOMD(decision_set=decision_set, objective=objectives[0], eta=.05, gamma=0.02)
     policyOGA = OGA(decision_set=decision_set, objective=objectives[0], eta=.001)
-    def run_non_stationary_exp(policy, name, T_half = 100):
+
+
+    def run_non_stationary_exp(policy, name, T_half=100):
         for t in range(T_half):
             policy.step()
             print(policyTBG.decision, sum(policyTBG.decision))
 
-        plt.plot(taverage(policy.frac_rewards), label = name)
+        plt.plot(taverage(policy.frac_rewards), label=name)
+
+
     # run_non_stationary_exp(policyOMD, 'OMD')
     # run_non_stationary_exp(policyShiftedOMD, 'SOMD')
     # run_non_stationary_exp(policyOGA, 'OGA')
     run_non_stationary_exp(policyTBG, 'TBG')
     # run_non_stationary_exp(policyFSF, 'FSF')
-    plt.plot([0,100], [objectives[0].get_opt(decision_set)[0]]*2, linestyle = '--', color = 'black')
+    plt.plot([0, 100], [objectives[0].get_opt(decision_set)[0]] * 2, linestyle='--', color='black')
     plt.legend()
     plt.show()
 
