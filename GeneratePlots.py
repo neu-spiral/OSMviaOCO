@@ -44,8 +44,9 @@ if __name__ == "__main__":
     if args.type == 'ITERvsREWARDS':
         plots = dict()
         for root in files:
-            eta = eval(root.split('/')[-1].split('_')[1].replace('p', '.'))
+            eta = eval(root.split('/')[-1].split('_')[1].replace('p', '.')) if 'eta' in root else None
             gamma = eval(root.split('/')[-1].split('_')[3].replace('p', '.')) if 'gamma' in root else None
+            n_colors = eval(root.split('/')[-1].split('_')[-1]) if 'OnlineTBG' in root else None
             frac_rewards = []
             int_rewards = []
             running_time = []
@@ -72,55 +73,65 @@ if __name__ == "__main__":
             std_frac_opt = np.std(np.array(frac_opts), axis=0)
 
             if output_dir not in plots:
-                plots[output_dir] = {(eta, gamma): {'avg_frac_rewards': avg_frac_rewards,
-                                                    'avg_int_rewards': avg_int_rewards,
-                                                    'avg_running_time': avg_running_time, 'avg_frac_opt': avg_frac_opt,
-                                                    'std_frac_rewards': std_frac_rewards,
-                                                    'std_int_rewards': std_int_rewards,
-                                                    'std_running_time': std_running_time,
-                                                    'std_frac_opt': std_frac_opt}}
+                plots[output_dir] = {(eta, gamma, n_colors): {'avg_frac_rewards': avg_frac_rewards,
+                                                              'avg_int_rewards': avg_int_rewards,
+                                                              'avg_running_time': avg_running_time,
+                                                              'avg_frac_opt': avg_frac_opt,
+                                                              'std_frac_rewards': std_frac_rewards,
+                                                              'std_int_rewards': std_int_rewards,
+                                                              'std_running_time': std_running_time,
+                                                              'std_frac_opt': std_frac_opt}}
             else:
-                plots[output_dir][(eta, gamma)] = {'avg_frac_rewards': avg_frac_rewards,
-                                                   'avg_int_rewards': avg_int_rewards,
-                                                   'avg_running_time': avg_running_time, 'avg_frac_opt': avg_frac_opt,
-                                                   'std_frac_rewards': std_frac_rewards,
-                                                   'std_int_rewards': std_int_rewards,
-                                                   'std_running_time': std_running_time,
-                                                   'std_frac_opt': std_frac_opt}
+                plots[output_dir][(eta, gamma, n_colors)] = {'avg_frac_rewards': avg_frac_rewards,
+                                                             'avg_int_rewards': avg_int_rewards,
+                                                             'avg_running_time': avg_running_time,
+                                                             'avg_frac_opt': avg_frac_opt,
+                                                             'std_frac_rewards': std_frac_rewards,
+                                                             'std_int_rewards': std_int_rewards,
+                                                             'std_running_time': std_running_time,
+                                                             'std_frac_opt': std_frac_opt}
 
         # print(f"plots are {plots}")
         for output_dir in plots:
             print(output_dir)
-            jet = plt.get_cmap('tab20')
-            colors = iter(jet(np.linspace(0, 1, 40)))
+            jet = plt.get_cmap('prism')
+            colors = iter(jet(np.linspace(0, 1, 30)))
             # frac_opts_per_eta = []
             for pair in plots[output_dir]:
                 # print(f"eta is {eta}")
                 eta = pair[0]
                 gamma = pair[1]
+                n_colors = pair[2]
                 my_color = next(colors)
-                result = plots[output_dir][(eta, gamma)]
+                result = plots[output_dir][(eta, gamma, n_colors)]
                 frac_opt = result['avg_frac_opt']
                 T = len(result['avg_frac_rewards'])
                 t1 = int(T / 3)
                 t2 = int(2 * T / 3)
                 t3 = T - 1
                 headers = ['t', 'F*', '(int) f_avg / F*', '(int) f_std_dev',
-                           '(frac) f_avg / F*', '(frac) f_std_dev', 'eta', 'gamma']
-                table = [[t1, frac_opt, result['avg_int_rewards'][t1]/frac_opt, result['std_int_rewards'][t1],
-                          result['avg_frac_rewards'][t1]/frac_opt, result['std_frac_rewards'][t1], eta, gamma],
-                         [t2, frac_opt, result['avg_int_rewards'][t2] / frac_opt, result['std_int_rewards'][t2],
-                          result['avg_frac_rewards'][t2] / frac_opt, result['std_frac_rewards'][t2], eta, gamma],
-                         [t3, frac_opt, result['avg_int_rewards'][t3] / frac_opt, result['std_int_rewards'][t3],
-                          result['avg_frac_rewards'][t1] / frac_opt, result['std_frac_rewards'][t1], eta, gamma]]
-                print(tabulate(table, headers=headers, floatfmt=".4f"))
-                my_label = f"eta={eta}, gamma={gamma}, fractional" if gamma is not None else f"eta={eta}, fractional"
-                plt.plot(range(T), result['avg_frac_rewards'],
+                           '(frac) f_avg / F*', '(frac) f_std_dev', 'eta', 'gamma', 'n_colors']
+                table = [[t1, frac_opt, result['avg_int_rewards'][t1] / frac_opt,
+                          result['std_int_rewards'][t1] / frac_opt,
+                          result['avg_frac_rewards'][t1] / frac_opt, result['std_frac_rewards'][t1] / frac_opt,
+                          eta, gamma, n_colors],
+                         [t2, frac_opt, result['avg_int_rewards'][t2] / frac_opt,
+                          result['std_int_rewards'][t2] / frac_opt,
+                          result['avg_frac_rewards'][t2] / frac_opt, result['std_frac_rewards'][t2] / frac_opt,
+                          eta, gamma, n_colors],
+                         [t3, frac_opt, result['avg_int_rewards'][t3] / frac_opt,
+                          result['std_int_rewards'][t3] / frac_opt,
+                          result['avg_frac_rewards'][t1] / frac_opt, result['std_frac_rewards'][t1] / frac_opt,
+                          eta, gamma, n_colors]]
+                print(tabulate(table, headers=headers, floatfmt=".3g"))
+                my_label = f"eta={eta}, gamma={gamma}, integral" if gamma is not None else f"eta={eta}, integral"
+                my_label += f", n_colors={n_colors}" if n_colors is not None else f""
+                plt.plot(range(T), result['avg_int_rewards'],
                          label=my_label, linestyle='dashed', color=my_color)
                 # plt.plot(range(len(result['avg_int_rewards'])), result['avg_int_rewards'],
                 #          label=f"eta={eta}, gamma={gamma}, integral", linestyle='solid', color=my_color)
             my_color = next(colors)
-            print(f"F_opt is {frac_opt:.3f}")
+            print(f"F_opt is {frac_opt:.3g}")
             plt.axhline(y=frac_opt, color=my_color, linestyle='-', label=f"fractional optimum")
 
             plt.ylabel("rewards")
