@@ -89,8 +89,15 @@ if __name__ == "__main__":
         elif args.problemType == 'TF':
             logging.info('Loading team formation dataset...')
             functions = load(args.input)
-            print(f'h_0 = {functions[0][0]}')
-            target_partitions = load(args.partitions)
+            if args.partitions is not None:
+                target_partitions = load(args.partitions)
+                print(target_partitions)
+                k_list = dict.fromkeys(target_partitions.keys(), args.k)
+                constraints = 'partition_matroid'
+            else:
+                target_partitions = {0: set(range(len(functions[0][0])))}
+                k_list = [args.k]
+                constraints = 'cardinality'
             print(f"target partitions are: {target_partitions}")
             k_list = dict.fromkeys(target_partitions.keys(), args.k)
             logging.info('...done. Defining a TeamFormation Problem...')
@@ -116,6 +123,7 @@ if __name__ == "__main__":
         new_objectives, F = newProblem.translate()  # it should return a list of ThresholdObjective objects
     if args.problemType == 'TF':
         new_objectives = newProblem.thresholds
+        opt_frac_reward = newProblem.frac_opt
 
     num_objectives = len(new_objectives)
     logging.info("ThresholdObjectives are generated.")
@@ -203,8 +211,10 @@ if __name__ == "__main__":
     logging.info("The algorithm is finished.")
 
     #  find the solution using cvxpy
-    opt_frac_reward, opt = F.get_opt(new_decision_set)
-    print(f"optimum fractional reward is {opt_frac_reward}")
+    if args.problemType != 'TF':
+        opt_frac_reward, opt = F.get_opt(new_decision_set)
+        print(f"optimum fractional reward is {opt_frac_reward}")
+    
 
     # SAVE THE RESULTS OF THE OCOPolicy
     final_frac_rewards = np.array(newPolicy.frac_rewards)
