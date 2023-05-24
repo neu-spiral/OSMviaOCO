@@ -8,6 +8,7 @@ The datasets that we used are contained in the `datasets/` folder.
 - $\texttt{MovieLens}$
 - $\texttt{TeamFormation}$
 
+Dataset $\texttt{SynthWC}$  is generated on the fly in simple_exps.py. 
 ### Algorithms
 All algorithms are implemented in the `oco_tools.py` file.
 Implemented algorithms:
