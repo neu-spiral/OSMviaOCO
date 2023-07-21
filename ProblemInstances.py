@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
-from ContinuousGreedy import UniformMatroidSolver, PartitionMatroidSolver, SamplerEstimator, PolynomialEstimator, \
-    ContinuousGreedy, StochasticGradientEstimator, generate_samples
+# from ContinuousGreedy import UniformMatroidSolver, PartitionMatroidSolver, SamplerEstimator, PolynomialEstimator, \
+#     ContinuousGreedy, StochasticGradientEstimator, generate_samples
 from networkx import Graph, DiGraph
 from networkx.algorithms import bipartite
 from oco_tools import ThresholdObjective
@@ -151,24 +151,39 @@ class Problem(object):
         C = range(len(self.wdnf_dict))
         # sign = self.wdnf_dict[0].sign
         F = WDNF(dict(), -1)
+        S_mins = []
+        S_maxs =[]
+        S_avgs = []
+        c_avgs = []
         for graph in self.wdnf_dict:
             params = dict()
             params['n'] = n
+            print(f"n = {n}\n")
             wdnf = self.wdnf_dict[graph].coefficients.copy()
             wdnf.pop((), None)
             # sys.stderr.write('wdnfs: ' + str(wdnfs) + '\n')
             C = range(len(wdnf))
+            print(f"|C| = {len(C)}\n")
             # sys.stderr.write('C: ' + str(C) + '\n')
             params['C'] = C
             # sys.stderr.write('b: ' + str(np.ones(len(C))) + '\n')
             params['b'] = np.ones(len(C))
+            print(f"b = 1_({len(C)}x1)\n")
             # sys.stderr.write('w: ' + str(np.ones(n)) + '\n')
             params['w'] = np.ones((len(C), n))
+            print(f"w = 1_({len(C)}x{n})\n")
             # print(list(self.wdnf_dict.keys()))
             # sys.stderr.write('S: ' + str(list(wdnfs.keys())) + '\n')
             params['S'] = [list(key) for key in list(wdnf.keys())]
+            print(f"S = {params['S']}\n")
+            lst_of_sizes = [len(lst) for lst in params['S']]
+            print(f"|S|_list = {lst_of_sizes}")
+            S_mins.append(min(lst_of_sizes))
+            S_maxs.append(max(lst_of_sizes))
+            S_avgs.append(np.average(lst_of_sizes))
             # sys.stderr.write('c: ' + str(list(wdnfs.values())) + '\n')
             params['c'] = [-1 * value for value in list(wdnf.values())]
+            c_avgs.append(np.average(params['c']))
             # extensive tests
             # y = dict.fromkeys(self.groundSet, 0.0)
             # for _ in range(100):
@@ -180,6 +195,10 @@ class Problem(object):
             #         f"TRANSLATION IS INCORRECT!"
             F += (1.0 / self.instancesSize) * self.wdnf_dict[graph]
             threshold_objectives.append(ThresholdObjective(params))
+        print(f"S_min = {min(S_mins)}\n")
+        print(f"S_max = {max(S_maxs)}\n")
+        print(f"S_avg = {np.average(S_avgs)}\n")
+        print(f"c_avg = {np.average(c_avgs)}\n")
         F_params = dict()
         # print(f"F is {F.coefficients}")
         F_wdnf = F.coefficients.copy()

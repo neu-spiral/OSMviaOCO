@@ -1,4 +1,4 @@
-from ContinuousGreedy import multilinear_relaxation
+# from ContinuousGreedy import multilinear_relaxation
 from helpers import load
 from ProblemInstances import InfluenceMaximization, FacilityLocation, derive
 from tabulate import tabulate
@@ -53,7 +53,7 @@ if __name__ == "__main__":
             frac_opts = []
             for f in files[root]:
                 result = load(os.path.join(root, f))
-
+                print(os.path.join(root, f))
                 frac_rewards.append(result['cum_frac_rewards'])
                 int_rewards.append(result['cum_int_rewards'])
                 running_time.append(np.array(result['running_time']))
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         for output_dir in plots:
             print(output_dir)
             jet = plt.get_cmap('prism')
-            colors = iter(jet(np.linspace(0, 1, 30)))
+            colors = iter(jet(np.linspace(0, 1, 50)))
             # frac_opts_per_eta = []
             for pair in plots[output_dir]:
                 # print(f"eta is {eta}")

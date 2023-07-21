@@ -1,12 +1,12 @@
 #!/bin/bash
 
-for eta in 2.5
+for eta in 0.1 1 10 160
 do
-    for gamma in 0.0
+    for n_colors in 1 2 4 8
     do
         for seed in 4 8 15 16 23
         do
-            sbatch test_ZKC $eta $gamma $seed
+            sbatch test_ZKC_part $eta $n_colors $seed
         done
     done
 done
