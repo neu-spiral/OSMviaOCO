@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+
+#SBATCH --time=23:00:00
+
+#SBATCH --job-name='TF_TBG_part'
+
+#SBATCH --partition=short
+
+#SBATCH --constraint=broadwell
+
+#SBATCH --output=slurm_logs/TF_TBG_part_%j.out
+
+#SBATCH --error=slurm_logs/TF_TBG_part_%j.err
+
+srun python main.py --problemType TF --input datasets/TF_100_100_5 --partitions datasets/TF_100_100_5_partitions --policy OnlineTBG --eta $1 --n_colors $2 --k 2 --seed $3 --T 100

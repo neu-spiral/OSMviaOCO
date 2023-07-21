@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+
+#SBATCH --time=23:00:00
+
+#SBATCH --job-name='FL_MovieLens_TBG_part'
+
+#SBATCH --partition=short
+
+#SBATCH --constraint=broadwell
+
+#SBATCH --output=slurm_logs/FL_movielens_TBG_part_%j.out
+
+#SBATCH --error=slurm_logs/FL_movielens_TBG_part_%j.err
+
+srun python main.py --problemType FL --input datasets/MovieLens_294_users_21_movies --partitions datasets/MovieLens_294_users_21_movies_partitions --policy OnlineTBG --eta $1 --k 1 --n_colors $2 --seed $3 --T 294

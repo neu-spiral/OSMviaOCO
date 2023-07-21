@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+
+#SBATCH --time=23:00:00
+
+#SBATCH --job-name='IM_ZKC_TBG'
+
+#SBATCH --partition=short
+
+#SBATCH --constraint=broadwell
+
+#SBATCH --output=slurm_logs/IM_ZKC_TBG_part_%j.out
+
+#SBATCH --error=slurm_logs/IM_ZKC_TBG_part_%j.err
+
+srun python main.py --problemType IM --input datasets/ZKC_100_01_42 --partitions datasets/ZKC_100_01_42_partitions --policy OnlineTBG --T 100 --k 2 --eta $1 --n_colors $2 --seed $3
