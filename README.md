@@ -6,17 +6,19 @@ This repository houses the code used for the experiments in our work:
 The work explores efficient online algorithms for maximizing monotone submodular functions under general matroid constraints. Please cite this paper ([a preprint is available](https://arxiv.org/pdf/2309.04339.pdf)) if you intend to use this code for your research.
 
 **Datasets.** All datasets used in this work are located in the `datasets/` folder.
+
 - $\texttt{ZKC}$
 - $\texttt{Epinions}$
 - $\texttt{MovieLens}$
 - $\texttt{TeamFormation}$
 
-Dataset $\texttt{SynthWC}$  is generated on the fly in simple_exps.py. 
+Furthermore, the $\texttt{SynthWC}$ dataset is dynamically generated in `simple_exps.py`.
+
 **Algorithms.**  All algorithms are implemented in the `oco_tools.py` file.
 Implemented algorithms:
 - $\texttt{RAOCO - OGA}$
 - $\texttt{RAOCO - OMA}$
-- $\texttt{FSF}^*$
+- $\texttt{FSF}^\star$
 - $\texttt{TabularGreedy}$
 
 **Examples.** 
@@ -26,7 +28,7 @@ Execute $\texttt{RAOCO-OGA}$ algorithm on the $\texttt{ZKC}$ dataset under parti
 python3 main.py --problemType ZKC --eta 1  --policy OGA --k 2  --partitions datasets/ZKC_100_01_42_partitions --input datasets/ZKC_100_01_42
 ```
 
-Uniform matroid? Leave out the `--partitions` option.
+For the uniform matroid constraint, simply omit the `--partitions` argument.
 
 **Logged Results.**  The results of our experiments are saved in the `results/` folder.
 
