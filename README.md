@@ -1,4 +1,4 @@
-# Code of Online Submodular Maximization via Online Convex Optimization
+## Code of Online Submodular Maximization via Online Convex Optimization
 This repository houses the code used for the experiments in our work:
 
 > T. Si-Salem, G. Özcan, I. Nikolaou, E. Terzi, S. Ioannidis, "Online Submodular Maximization via Online Convex Optimization", Proceedings of the AAAI Conference on Artificial Intelligence, 2024.
