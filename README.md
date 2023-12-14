@@ -32,4 +32,4 @@ For the uniform matroid constraint, simply omit the `--partitions` argument.
 
 **Logged Results.**  The results of our experiments are saved in the `results/` folder.
 
-**Visualization.** The GeneratePlots.py script processes a populated results/ folder by: (1) generating plots, and (2) building tables with: (a) fractional optimal rewards, (b) normalized integral/fractional rewards, and (c) key algorithm parameters (e.g., $\eta$). We report rewards as average cumulative values at $t \in \{T/3,2T/3,T\}$ (time slots). For experiments with varying seeds (e.g., `python3 main.py * --seed 42`), both the mean and standard deviation of rewards are calculated.
+**Visualization.** The GeneratePlots.py script processes a populated results/ folder by: (1) generating plots, and (2) building tables with: (a) fractional optimal rewards, (b) normalized integral/fractional rewards, and (c) key algorithm parameters (e.g., $\eta$). We report rewards as average cumulative values at $t = \{T/3,2T/3,T\}$ (time slots). For experiments with varying seeds (e.g., `python3 main.py * --seed 42`), both the mean and standard deviation of rewards are calculated.
