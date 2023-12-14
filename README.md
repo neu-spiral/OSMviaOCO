@@ -1,5 +1,7 @@
-# OnlineSubmodularLearning
-Code repository to support experiments for our work titled **Online Submodular Maximization via Online Convex Optimization**.
+# Code of Online Submodular Maximization via Online Convex Optimization
+Code repository to support experiments for our work  presented in
+
+> T. Si-Salem, G. Özcan, I. Nikolaou, E. Terzi, S. Ioannidis, "Online Submodular Maximization via Online Convex Optimization", Proceedings of the AAAI Conference on Artificial Intelligence, 2024.
 
 ### Datasets
 The datasets that we used are contained in the `datasets/` folder.
