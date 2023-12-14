@@ -24,7 +24,10 @@ Implemented algorithms:
 Example: \
 Running the $\texttt{RAOCO - OGA}$ algorithm on the $\texttt{ZKC}$ dataset with partition matroid constaints,\
 where from every partition we select at most $k$ nodes:\
-`python3 main.py --problemType ZKC --eta 1  --policy OGA --k 2  --partitions datasets/ZKC_100_01_42_partitions --input datasets/ZKC_100_01_42`
+
+``` bash
+python3 main.py --problemType ZKC --eta 1  --policy OGA --k 2  --partitions datasets/ZKC_100_01_42_partitions --input datasets/ZKC_100_01_42
+```
 
 If we want to use the uniform matroid constraint we just ommit the `--partitions` argument.
 
