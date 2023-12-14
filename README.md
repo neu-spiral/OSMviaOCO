@@ -1,6 +1,8 @@
 # Code of Online Submodular Maximization via Online Convex Optimization
-This repository houses the code used for the experiments in our work, 
+This repository houses the code used for the experiments in our work:
+
 > T. Si-Salem, G. Özcan, I. Nikolaou, E. Terzi, S. Ioannidis, "Online Submodular Maximization via Online Convex Optimization", Proceedings of the AAAI Conference on Artificial Intelligence, 2024.
+
 The work explores efficient online algorithms for maximizing monotone submodular functions under general matroid constraints. Please cite this paper ([a preprint is available](https://arxiv.org/pdf/2309.04339.pdf)) if you intend to use this code for your research.
 
 ### Datasets
