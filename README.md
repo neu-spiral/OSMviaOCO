@@ -5,8 +5,7 @@ This repository houses the code used for the experiments in our work:
 
 The work explores efficient online algorithms for maximizing monotone submodular functions under general matroid constraints. Please cite this paper ([a preprint is available](https://arxiv.org/pdf/2309.04339.pdf)) if you intend to use this code for your research.
 
-### Datasets
-The datasets that we used are contained in the `datasets/` folder.
+**Datasets.** The datasets that we used are contained in the `datasets/` folder.
 - $\texttt{ZKC}$
 - $\texttt{Epinions}$
 - $\texttt{MovieLens}$
